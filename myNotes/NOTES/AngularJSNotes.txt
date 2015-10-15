@@ -1,0 +1,47 @@
+﻿Angular JS Notes
+
+NetJets Angular apps:
+DSS  - http://stash.netjets.com/projects/FLIDIS/repos/dispatch-support-system/browse
+ETM
+MaintenEx
+
+
+Calling external service:
+angular.module('trip.components.contract').service('ContractResourcesService', ['ContractsForAccount', function (ContractsForAccount) {
+        function getContractsForAccount(accountId, id) {            
+		return ContractsForAccount.get({accountId: accountId, id: id});        
+		}        
+		return 
+		{ getContractsForAccount: getContractsForAccount }    }]);
+OR:
+
+angular.module('trip.components.contract').factory('ContractsForAccount', function ($resource) {
+        return $resource('api/contracts/:accountId', {accountId: '@accountId'}, 
+		{get: { method: 'GET', cache: true, isArray: true}});    });
+
+Angular docs:
+https://docs.angularjs.org/api/ng/directive/ngChange		
+		
+Mock backEnd service:
+https://docs.angularjs.org/api/ngMock/service/$httpBackend
+
+Common Mistakes:
+https://www.airpair.com/angularjs/posts/top-10-mistakes-angularjs-developers-make
+
+Google standards:
+http://google-styleguide.googlecode.com/svn/trunk/angularjs-google-style.html
+
+Jackie:  I have a presentation on our experiences and why we use what we use here…
+http://slides.com/jackiegleason/deck-5
+
+Scopes:
+http://thenittygritty.co/angularjs-pitfalls-using-scopes
+
+
+Angular notes
+
+Drop down good explanation of ng-options
+http://www.undefinednull.com/2014/08/11/a-brief-walk-through-of-the-ng-options-in-angularjs/
+
+
+

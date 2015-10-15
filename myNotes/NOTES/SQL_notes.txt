@@ -1,0 +1,12 @@
+SQL Notes
+
+
+Use this to see a timestamp in an Oracle DATE
+SELECT CAST(fa.initiated_at AS TIMESTAMP) "Date" FROM fax_attempt fa;
+
+Understanding With clause
+http://gennick.com/database/understanding-the-with-clause
+
+
+Select returns map example:
+select new map(legContractCharges.contractRemainingHours as remainingHours, netjetsActivityInvoice.billingCycle as billingCycle) from Leg leg

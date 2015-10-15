@@ -1,0 +1,80 @@
+Tabs!
+
+
+<div class='tabs'>
+        <span ng-class="{'active': (selected == '1')}" ng-click='selected=1' id="createServiceAreaTab">
+            Create Collective Service Area
+        </span>
+        <span ng-class="{'active': (selected == '2')}" ng-click='selected=2'>
+            Service Areas
+        </span>
+        <span ng-class="{'active': (selected == '3')}" ng-click='selected=3'>
+            Collective Service Areas
+        </span>
+    </div>
+<div class='tab-content'>
+        <div ng-show='selected == 1' id="createServiceAreaTabCnt">
+            <g:render template="selectServiceArea"/>
+        </div>
+        <div ng-show='selected == 2'>
+            This is second content...
+        </div>
+        <div ng-show='selected == 3'>
+            This is third content...
+        </div>
+    </div>
+
+
+
+
+.tabs {
+    background: #ffffff;
+    border-bottom: none;
+}
+ .tabs span {
+    margin-right: -5px;
+    cursor: pointer;
+    position: relative;
+    padding: 18px 20px 18px;
+    display: inline-block;
+    color: #000000;
+    -webkit-transition: all .3s ease-in-out;
+    -moz-transition: all .3s ease-in-out;
+    transition: all .3s ease-in-out;
+}
+ .tabs span:hover {
+    background:#1d70b7;
+     color: #ffffff;
+}
+ .tabs .active {
+    background: midnightblue;
+    color: #ffffff;
+}
+ .tabs .active:hover {
+    background: #1d70b7;
+    color: #ffffff;
+}
+ .tabs .active:after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    width: 0;
+    height: 0;
+    left: 50%;
+    margin-left: -10px;
+    border-style: solid;
+    border-width: 0 14px 14px 14px;
+    border-color: transparent transparent #ffffff transparent;
+}
+ .tab-content {
+    border-top: none;
+    background: #ffffff;
+    clear: both;
+    overflow: hidden;
+    text-align: left;
+    padding: 3%;
+    margin-bottom: 30px;
+}
+ .tab-content img {
+    border: 4px solid #f1f1f1;
+}

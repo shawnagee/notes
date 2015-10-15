@@ -1,0 +1,111 @@
+import groovy.sql.Sql
+import org.hibernate.cfg.ImprovedNamingStrategy
+import javax.sql.DataSource
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
+def tableOwner = "IJET"
+def tableName = "CONTRACT_BASE"
+def outputFile = "ContractBase.output"
+
+def sql = Sql.newInstance("jdbc:oracle:thin:@ijet2dv4:1521:ijet2dv4","contract_app_team","t3rm1n4te", "oracle.jdbc.driver.OracleDriver")
+
+def generateColumnName(name) {
+    def namingStrategy = new ImprovedNamingStrategy()
+    def n = namingStrategy.columnName(name)
+    n = n.replaceAll(/^u##/,'upper_')
+    n = n.replaceAll('#','_number')
+    replaceUnderscores(n)
+}
+def replaceUnderscores(name) {
+    def parts = name.split('_')
+    def n = parts[0]
+    for (def i = 1; i < parts.size(); i++) {
+        n = n + parts[i].capitalize()
+    }
+    n
+}
+def asString(List list) {
+    def output = "["
+    list.eachWithIndex { it, index ->
+        output += (index != 0 ? "," : "") + "\"${it}\""
+    }
+    output + "]"
+}
+def fields = []
+def namingStrategy = new ImprovedNamingStrategy()
+sql.eachRow("select * from all_tab_cols where owner = '${tableOwner.toUpperCase()}' and table_name = '${tableName.toUpperCase()}' order by column_id asc") {
+    def field = [:]
+    field.mapping = [:]
+    field.constraints = [:]
+    field.name = generateColumnName(it.column_name)
+    field.dataType = "String"
+    if (it.data_type == 'NUMBER') {
+        field.dataType = "Long"
+    } else if (it.data_type == 'DATE') {
+        field.dataType = "Date"
+    }
+    if (field.name != replaceUnderscores(namingStrategy.columnName(it.column_name))) {
+        field.mapping.column = it.column_name
+    }
+    if (field.dataType == "String") {
+        field.constraints.maxSize = it.data_length
+    }
+    if (it.nullable == "Y") {
+        field.constraints.nullable = true
+    }
+    fields << field
+}
+def out = new PrintWriter(new FileOutputStream(outputFile))
+fields.each {
+    out.println(it.dataType + " " + it.name)
+}
+out.println("\n\nstatic mapping = {")
+fields.each {
+    if (it.mapping) {
+        def line = "\t" + it.name + " "
+        it.mapping.each { key, value ->
+            line += "${key}: '${value}'"
+        }
+        out.println(line)
+    }
+}
+out.println("}")
+out.println("\n\nstatic constraints = {")
+fields.each {
+    if (it.constraints) {
+        def line = "\t" + it.name + " "
+        it.constraints.eachWithIndex { key, value, index ->
+            line += (index > 0? ", " : "") + "${key}: ${value}"
+        }
+        out.println(line)
+    }
+}
+out.println("}")
+def nullableTests = []
+def notNullableTests = []
+def maxSizeTests = [:]
+fields.each {
+    if (it.constraints.nullable) {
+        nullableTests << it.name
+    } else {
+        notNullableTests << it.name
+    }
+    if (it.constraints.maxSize) {
+        if (maxSizeTests.containsKey(it.constraints.maxSize)) {
+            maxSizeTests.get(it.constraints.maxSize) << it.name
+        } else {
+            maxSizeTests.put(it.constraints.maxSize, [it.name])
+        }
+    }
+}
+out.println("\n\nconstraintTests:\n")
+out.println("@Test")
+out.println("void testConstraints() {")
+out.println("\tmockForConstraintsTests(CLASS)")
+out.println("\tDomainConstraintValidator.assertFieldsCanNotBeNull(CLASS,${asString(notNullableTests)})")
+out.println("\tDomainConstraintValidator.assertFieldsCanBeNull(CLASS,${asString(nullableTests)})")
+maxSizeTests = maxSizeTests.sort { a, b -> b.key <=> a.key }
+maxSizeTests.each { key, value ->
+    out.println("\tDomainConstraintValidator.assertStringMaxSize(CLASS,${asString(value)},${key})")
+}
+out.println("}")
+out.close()

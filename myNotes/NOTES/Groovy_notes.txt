@@ -1,0 +1,235 @@
+Groovy notes
+
+seconds compare.  Can also compare days, months, milliseconds, etc.
+
+use(TimeCategory){
+	difference = (new Date() - ifxSsoCertAuth.createDate)
+	return difference <= 20.seconds ? ifxSsoCertAuth : false
+}
+
+
+
+Pattern match:
+    def static final preexistentProductPattern = ~/Product (.+) already exists./
+
+    def decorate(message) {
+        Matcher matcher = preexistentProductPattern.matcher(message)
+        if (matcher.matches()) {
+            def productCode = matcher.group(1);
+            return "Product <a id=\"preexistingProduct\" href=\"${request.contextPath}/productRecordDomain/edit?productCode=${productCode}\">${productCode}</a> already exists."
+        }
+        message
+    }
+
+CreateCriteria:
+def c = Account.createCriteria()
+def results = c.list {
+    like("holderFirstName", "Fred%")
+    and {
+        between("balance", 500, 1000)
+        eq("branch", "London")
+    }
+    maxResults(10)
+    order("holderLastName", "desc")
+}
+
+def aisACTails = AisAircraft.createCriteria().list() {
+	if(cmd?.aircraftStateIds) {
+		inList("aircraftStateId", cmd.aircraftStateIds)
+	}
+	if(cmd?.aircraftTypeId) {
+		aircraftType {
+			eq("id", cmd.aircraftTypeId)
+		}
+	}
+	if(cmd?.fleetGroupId) { 
+	    aircraftType {
+    		"fleetGroup" { eq("id", cmd.fleetGroupId) } 
+		} 
+	}
+	if(cmd?.tailNumberContains) {
+		ilike("tailNumber", "%${cmd.tailNumberContains}%")
+	}
+}
+
+def aisHolds =  Hold.createCriteria().list {
+              join "aisAircraft"
+              join "holdTypeCd"
+              eq("isDeleted", false)
+              if(paramsMap.fleetGroup){aisAircraft {aircraftType { fleetGroup { eq("id", paramsMap.fleetGroup.toLong()) } }}}
+              if(paramsMap.aircraftType){aisAircraft { aircraftType { eq("id", paramsMap.aircraftType.toLong()) }}}
+              if(paramsMap.vintage){aisAircraft{between('manufactureDate' ,start,end)}}
+              if(paramsMap.holdType){ holdTypeCd{ inList("code",paramsMap.holdType.toInteger()) } }
+              if(paramsMap.tailNumberContains) {
+                  or {
+                      aisAircraft {
+                          ilike("tailNumber", "%${paramsMap.tailNumberContains}%")
+                      }
+                      ilike("heldByUserName", "%${paramsMap.tailNumberContains}%")
+                  }
+              }
+              aisAircraft{aircraftType { order("rank", "asc") }}
+              order("expiresTs","asc")
+              order("holdPercent","asc")
+
+          }
+          def currentDate = new Date()
+          def activeHolds = aisHolds.findAll{it.expiresTs.clearTime() >= currentDate.clearTime()}
+          log.info("Getting all Active Holds >> ${activeHolds}")
+          activeHolds
+
+Groovy intersect...finds matches in 2 lists
+def list1 = ["hello", "world", "test", "test"];
+def list2 = ["world", "world", "world", "test"];
+
+println( "Intersect list1 with list2: " + list1.intersect( list2 ) );
+
+
+Not in this list:
+def filteredResults = results.findAll { invalidCabinSizesForAIS.contains(it.name) ? false : true }
+
+
+Expecting date format
+static def formatStr = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+actualJson.manufactureDate == parent.manufactureDate?.format(formatStr)
+
+
+Create json for test
+    private def buildJSONSearchObj(){
+        def jsonText = '''
+                   [
+                      {
+                        "id": 5,
+                        "tailNumber": "N143QS",
+                        "manufactureDate": "2002-01-01T00:00:00Z",
+                        "warrantyExpirationDate": "2006-07-21T00:00:00Z",
+                        "contractsUntilDate": "2012-07-21T00:00:00Z",
+                        "sellingShares": false,
+                        "sellingAddOns": false,
+                        "aircraftStateCd": 2,
+                        "aircraftStateDesc": "On Order",
+                        "companyId": 1000001,
+                        "companyName": "NJA",
+                        "inventoryType": {
+                          "id": 3,
+                          "aircraftTypeName": "Global 6000",
+                          "fleetGroup": {
+                            "id": 2,
+                            "fleetGroupName": "Global"
+                          }
+                        }
+                      }
+                    ]
+        '''
+        def json = new JsonSlurper().parseText(jsonText)
+        json
+    }
+	
+with criteria, inList:
+   def aircraftList = AisAircraft.withCriteria {
+		aircraftStateCT{
+			inList("id",statesList)
+		}
+		aircraftType{
+			eq("id",acTypeId)
+		}
+	}
+
+CreateCriteria, projections and property is just selected column instead of all columns	
+def result = Contract.createCriteria().list(){
+             eq("id",cmd.id)
+             projections{
+                 property('operationalRestrictions')
+                 property('peakDateListCd')
+
+             }
+        }
+
+Dynamic query lines:
+        def contractHrsStartBillingMonth =  getFormatDateToFirstOfMonth(contractHours?.startDate)
+        def contractHrsEndBillingMonth   =  getFormatDateToFirstOfMonth(contractHours?.endDate)
+
+        def query = """
+                        select new map(legContractCharges.contractRemainingHours as remainingHours,
+                                       netjetsActivityInvoice.billingCycle as billingCycle,
+                                       contractHours.endDate as contractEndDate)
+                        from Leg leg
+                        left join leg.legContractCharges legContractCharges
+                        left join legContractCharges.netjetsActivityInvoice netjetsActivityInvoice
+                        left join netjetsActivityInvoice.contract contract
+                        left join contract.contractHours contractHours
+                        where contractHours.contract = :contract
+                        and netjetsActivityInvoice.statusCD in (:invoiceStatusCd)
+                        and netjetsActivityInvoice.billingCycle <= :billingCycle
+                        and legContractCharges.contractRemainingHours is not null
+                        and leg.etdTm <= current_date
+                        ${(contractHours&& contractHours.endDate && contractHours.startDate&& contractHours.endDate >= new Date()) ?
+                                ' and leg.etdTm > :contractYrStartDate and contractHours.startDate and netjetsActivityInvoice.billingCycle >=  :contractHrsStartBillingMonth and netjetsActivityInvoice.billingCycle <=  :contractHrsEndBillingMonth  ' : ''}
+                        order by netjetsActivityInvoice.billingCycle desc, leg.etdTm desc
+                   """
+
+        def params=[:]
+        params.contract=contract
+        params.invoiceStatusCd= [NetJetsConstants.INVOICE_STATUS_CREATED, NetJetsConstants.INVOICE_STATUS_REVIEWED]
+        params.billingCycle=getFormatDateToFirstOfMonth(null)
+        if(contractHours&& contractHours.endDate && contractHours.startDate&& contractHours.endDate >= new Date()){
+            params.contractHrsStartBillingMonth=contractHrsStartBillingMonth
+            params.contractHrsEndBillingMonth=contractHrsEndBillingMonth
+            params.contractYrStartDate=  contractHours.startDate
+        }
+
+		return Leg.executeQuery(query, params,[max: 1])
+	}
+	
+Complex createCriteria:
+  def aisHolds =  Hold.createCriteria().list {
+          join "aisAircraft"
+          join "holdTypeCd"
+          if(paramsMap.fleetGroup){aisAircraft {aircraftType { fleetGroup { eq("id", paramsMap.fleetGroup.toLong()) } }}}
+          if(paramsMap.aircraftType){aisAircraft { aircraftType { eq("id", paramsMap.aircraftType.toLong()) }}}
+          if(paramsMap.vintage){aisAircraft{between('manufactureDate' ,start,end)}}
+          if(paramsMap.holdType){ holdTypeCd{ inList("code",paramsMap.holdType.toInteger()) } }
+          if(paramsMap.tailNumberContains) { aisAircraft {  ilike("tailNumber", "%${paramsMap.tailNumberContains}%") } }
+          aisAircraft{aircraftType { order("rank", "asc") }}
+          order("holdPercent","asc")
+         order("expiresTs","asc")
+      }
+
+Command object custom range:
+salesStatusCd nullable: true, min: 1, max: 99, validator: { val, obj, errors -> obj.validateSalesStatusCd(val, obj, errors) }
+
+    boolean validateSalesStatusCd(val, obj, errors) {
+        log.trace("Entered validator for salesStatusCd with val ${val}, obj ${obj}")
+        boolean isValid = true
+        if((val) && (val >= 1) && (val <= 99)) {
+            def validParamVals = obj.codeService.findAllSalesStatusLookups()*.code
+            isValid = (val in validParamVals)
+            log.trace("Validator for salesStatusCd with salesStatusCd ${val} - not in list ${validParamVals}")
+            if(!isValid) {
+                errors.rejectValue('salesStatusCd', 'com.netjets.aircraft.SearchTailsCommand.salesStatusCd.customRange',
+                    ['salesStatusCd', val, validParamVals] as Object[], "Param {0} value {1} must be one of the following - {2}")
+            }
+        }
+        isValid
+    }
+	
+Each over a map example:
+public Map buildErrors(Map errors,userName=null) {
+        String serverName = new URL(Holders.config.grails.serverURL)?.host ?: ''
+        String applicationName = Holders.grailsApplication.metadata['app.name'] ?: ''
+
+        Map json = [ errors: [] ]
+        String dateTime = DateUtils.getXmlFormattedGMTTime()
+        errors.each() { key, val ->
+            json.errors << [code: key, description: val, application: applicationName, serverTime: dateTime, serverName: serverName, userName:userName]
+        }
+
+        return json
+    }
+
+
+messages.properties
+com.netjets.aircraft.SearchTailsCommand.salesStatusCd.customRange=Param {0} value {1} must be one of the following - {2}
+
+Sort spaceship operator
+(retVal) ? retVal.toList().sort{ a, b -> b.placedTs <=> a.placedTs } : []

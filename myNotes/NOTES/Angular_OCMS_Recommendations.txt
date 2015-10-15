@@ -1,0 +1,46 @@
+Overall
+- If all the apps are stand alone, move the asset pipeline declarations into each app.js file instead of having empty js files
+- compose folder structures in component style as opposed to function style
+- js tests?
+- inline comments might be beneficial
+
+Fuel Rate
+
+index.gsp
+- don't allow directive attributes to go too long (31)
+- try to to use ng-init - wrap it into controller initialization
+- don't use multiple functions in an attribute directive - wrap them into a single call (31)
+- x == true not necessary (45)
+- prefer css styles over inline (52)
+- e-ng-model? drop the e prefix(74)
+
+Fuel Rate Controller
+- ng-app folder not necessary
+- don't use the variable syntax for angular component declaration- use fluent style (1)
+- try using named functions instead of anonymous (8)
+- try using IIFE style 
+- organize controller layouts
+  - don't mix var and $scope declarations (11 - 44)
+  - group all like declarations at the top together - don't scatter throughout
+  - use initialization functions
+    - main init with all setup organized inside
+- don't declare variables on the global scope - i in the loop (27)
+- Prefer to use promises with resources as opposed to callbacks. More readable (102)
+- Refactor resource calls into service (102)
+- Refactor business logic out of controller into services (162)
+- don't fetch DOM elements from controller. Use scope variable to bind to view (437)
+
+directives
+- clearable - move object to return to top and don't declare var - function is named
+- transclude, replace not necessary
+
+Peak Day
+
+PeakDayController
+- multiple controllers and directives in single file. Separate into own files
+- use constants instead of objects on scope (15)
+- parsers on ngModel can be achieved by just using form and input directives    
+
+- delete commented out code
+  
+Settings

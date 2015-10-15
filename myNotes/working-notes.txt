@@ -1,0 +1,920 @@
+NetJets notes
+
+IT Support
+x3-5499
+9-number for outside call
+
+
+Wiki page
+wiki.netjets.com
+Search 'aircraft inventory' to quickly get to Global Contract Management
+
+Stash
+stash.netjets.com
+	aircraft-inventory OR aircraft-services
+Clone button gives you URL to copy.
+
+
+SourceTree - visual Git interface
+
+Outlook ... our group.  DST-NJIT-GCMS 
+
+Jenkins
+http://jenkins 
+aircraft 
+
+aircraft-inventory-x - UI builds
+aircraft-service  - service builds
+
+Overview of building projects:
+http://wiki/display/sharedit/Grails+2.3.7+Standards
+http://wiki/display/sharedit/Upgrading+an+Existing+Grails+Project+to+Grails+2.3.7
+
+
+----------------Jenkins------------
+TOP - aircraft-inventory-application-build - pulls app from Git and builds, for ITG
+aircraft-inventory-deploy-ci --- scheduled 6:40a and 12:10p
+	triggers aircraft-inventory-tests-ci - user acceptance tests
+aircraft-inventory-deploy - deploy to ITG, enter version# from TOP job
+	triggers aircraft-inventory-tests-itg  -- user acceptance tests
+	
+aircraft-service-tomcat-build 
+aircraft-service-tomcat-deploy
+
+contract-service jobs follow the same model.
+NOTE!  aircraft-service build will NOT go red if tests fail...check each console output for failed tests.
+
+Cmhdevbld04, 05, 06, 11, 12 are all config to run tests
+
+QA testers write 10 tests, @Ignore them all, until we tell him we satisfied each one at a time.
+Brian tracks progress of 10 tests via cards in the standup.  CI-tests are which are user-acceptance-tests, but could also point to security problems.
+ITG deploy, then ITG-tests test that all is working on ITG.
+
+http://amdev01:6380/probe  -- view only console for Tomcat 
+Mike and Neil are only ones with access to start/stop server.
+This is done via server_control script.  
+update_application script performs the DEPLOY
+Root.xml file contains the Datasource
+
+
+
+-----------Feature branching?-------
+Cannot do traditional model of Feature branches off DEV (CI points to) and Release branch at the end of all done features, because
+GitFlow merged a complete Release branch back to Develop AND MASTER.  We don't want Releases going to master until all 8 releases are complete.
+Plus, Brian wants commitment into each iteration, not overlapping Features
+
+
+Service-now 
+netjets.service-now.com 
+Timesheets:
+	save for each day, green check to save 
+	Submit each Friday
+	If week is split between months, Current Week last month/this month 
+	Submit timesheet to Improving every Wednesday.
+Change:
+	RFC (Request for Change) - such as DBA DCRs or deploying to QA 
+	One single RFC for deploy to QA, that both Prod Support and DBAs refer to.
+Self Service Portal:
+	IT Support tab - for general tickets
+
+
+Cadence schedule
+Mon 1st week               Tues 2nd week
+Iteration planning,        Estimation session
+then Design
+Commit #points iteration
+
+
+Shared drive W:  \\cmhfps30
+
+
+Printer, behind me
+\\CMHPRDFPS11\BWY2MIS401404
+Color printer in supply room
+BWY2MIS402501
+
+
+Network resources:
+Service Now:  https://netjets.service-now.com/nj_login.do
+Stash (Git Repo):  http://stash.netjets.com/projects
+Jenkins:  http://jenkins.netjets.com/job/billing/
+Jira for Global Billing:  http://jira.netjets.com/secure/RapidBoard.jspa?rapidView=641
+Wiki for Global Billing:  http://wiki.netjets.com/display/billing/Home
+Nexus (Maven Repo):  http://repository.netjets.com/nexus/index.html#view-repositories;releases~browsestorage
+
+----------------Jira--------------
+For requirements... Jira, search for JIRA# like '314'. You'll see link for requirements
+
+BCS Applications
+Links to Customer-Invoice-Management (CIMS) app for each environment:
+•	CIMS-CI:  http://cimsci.netjets.com
+•	CIMS-QA:  http://cimsqa.netjets.com
+•	CIMS-CAT:  http://cimscat.netjets.com
+•	CIMS-CLONE:  http://cimsclone.netjets.com
+Links to Invoice-Controller-Application (ICA) app for each environment:
+•	ICA-CI:   http://ica-ci.netjets.com
+•	ICA-QA:   http://ica-qa.netjets.com
+•	ICA-CAT:   http://ica-cat.netjets.com
+•	ICA-CLONE: http://ica-clone.netjets.com
+Logs:
+•	http://bcsdev01.netjets.com/
+•	http://bcsdev02.netjets.com/
+
+
+I changed the current owner of my C: from S-1-5-21-4280279005-4169410489-4129849001-500 to Shawn Agee
+
+Couple of videos to watch on estimating.
+\\Cmhfps30\DEV\Projects\Contracts
+
+
+Maven build Project:
+/aircraft/Aircraft-inventory-PROJECT    mvn7.bat clean install 
+	PROJECT builds WEB
+mvn7 dependency:tree  - shows dependencies
+
+-----------------Git----------------
+Git version 1.9.4
+From Stash, CLONE a project. Grab URL, then at cmd prompt, "git clone http://..." is how you "join" a project 
+c:\views\aircraft-service\git branch - shows which branch you are pointed to
+In SourceTree, File-> Open, point to views/aircraft-inventory or views/aircraft-service 
+The View shows >Branches - local
+               >Remotes - the repo 
+	Expand >release > R3, right click R3, Checkout Origin/Release R3 - this checks it out AND marks it as current with CHECKBOX.
+Obviously, work is done in Develop branch first
+Second, we merge to Release branch at Release to QA 
+After release, merge back to master 
+In IntelliJ, Import, point to master pom.xml to import it 
+On option screen, check ALL checkboxes.(two were unchecked by default)
+Switch is easy... can switch to diff branch on bottom right thru IntelliJ.
+
+--------------Git Merge----------------
+Both source and dest need checked out locally in SourceTree
+Opposite of SVN, instead of start with destination and point to source in repo.
+Click branch, then option will be 'merge into your current branch'
+
+
+Search Stash Util exists in Jenkins!
+
+GitFlow
+Installed and pointing to:
+http://sagee@stash.netjets.com/scm/airc/aircraft-service.git
+
+
+services  --->  Grails 2.3.7  --->  Tomcat JDK 1.7_45   --> currently R3  (used to be grails 2.2.0)
+WEB       --->  Grails 2.3.7  --->  Tomcat JDK 1.7_45   --> currently R1
+JAVA_HOME point to C:\IBM\WebSphere\AppServer7\java   and change GRAILS_HOME to C:\tools\grails-2.2.0
+JAVA_HOME point to c:\Program Files\java\jdk1.7.0_45  and change GRAILS_HOME to C:\tools\grails-2.3.7
+
+We can build QA for Tomcat, but not Websphere. Another good reason to migrate services to Tomcat.
+
+
+Hibernate use cache.use_query_cache = true, will save PK of searches, so next query with same criteria hits saved PK.
+Example:  CodeTableTrans.findByTagAndCode("AircraftCabinSize", code,  [cache: true])
+
+----------SQL Developer-----------
+IJETDEV - hostname IJET2DV4 is new Database
+Schema ACFT_OWNER
+Random table - ACFT_OWNER.ACFT_CODE_TYPE
+Creating ACFT_OWNER.acft_fleet_group
+IJET2DEV5 is old IJET DB.
+
+CONTRACT_APP_USER tr4nsm1t - Dev 
+CONTRACT_APP_USER pr0p4g4t3 - QA
+CONTRACT_APP_TEAM t3rm1n4te
+IJET2DV4  aircraft_app_team	t3rm1n4te
+IJET2QA1  aircraft_app_user  pr0p4g4t3
+qatest1 pw:Cr0ssTr@ck  - admin user 
+Legal user:  qatest3, QAv1at1on!
+qatest2 - "user" (legal)  DeP@rture1 
+qatest20 - sales 
+tqatest1 - for QA.  QAv1at1on!
+TQATEST1 - Cr0ssTr@ck
+esl_ijet_pool - spr1ngt1me   - QA
+
+------------Restarting ITG1&2 scripts-----------------
+http://wiki.netjets.com/display/sharedit/ITG+Environment+Startup+Steps+Detail
+
+--------IJET--------------
+IJET ITG1 = mstsc to cmhdevbldtsr04, use qatest1 which is admin.  Or use IJet2 icon
+
+----------Layer7----------------
+Search wiki for 'layer7 urls' ... http://wiki.netjets.com/display/sharedit/Layer7+urls 
+It shows the hostname to hit to test your services when deployed to dev.
+(ie.  servicesdev.netjets.com/{url-mappings}?appAgent=AircraftInventoryUser)  hits service with user of AircraftInventoryUser that is set up for access.
+
+---------ActiveDirectory------------
+Config.groovy contains roles.  
+netjetsoath default section - maps Role created in AD.(email confirmation) to role name we choose.(ROLE_AIS_xxxxx)
+
+------------Fleet Group------------
+Neil put spreadsheets of our new tables and table alterations on W:\Global Contracts\AIS\DB Requests\ITR0102370 
+Bounced design off Mike, then gave to DBA. (Brian Steck)  He will turn spreadsheets into SQL statements.
+
+Documented REST API found on wiki... Resp APIs > Rest Aircraft API > Inventory Fleet Group Resource
+
+create domain
+Services of supporting retrieveAllFleetGroups, retrieveFleetGroupById model after InventoryAircraftTypeService, InventoryAircraftTypeController
+Since FleetGroup is new, call the domain 'FleetGroup', kept in com.netjets.aircraft in pkg structure, but tables must have prefix, so ACFT_FLEET_GROUP.
+unit tests for controller
+service tests 
+service 
+
+model after InventoryAircraftTailController, InventoryAircraftTailService, ...converter 
+since this is exposed as a REST service, it needs documented on wiki, (Resp APIs > Rest Aircraft API > Inventory Aircraft Resource)
+   and results as JSON.
+   
+   
+--------------Spock-----------------------
+resources.groovy - add Converter classes here to allow them to be injected.
+>> is Spock notation like metaclass points to closure.
+UnitSpec = UnitTest
+@IgnoreRest - ignore all other tests except the one that has this annotation.
+
+Given: setup 
+When: call the service 
+Then: expected 
+
+Right way to throw exception in test...  http://kousenit.wordpress.com/2011/08/20/i-think-i-get-spock-mocks-now/
+Reference docs ... https://code.google.com/p/spock/wiki/Interactions#Method_constraints
+
+-----------JRuby----------
+Cmds:
+set environment={itg1,local,etc}
+bundle install   - initialize
+bundle exec rake ais_tests:legal_holds  - runs ais_tests in RakeFile with @legal_holds annotations
+bundle exec rake 
+
+data_helper.jb file contains users and roles used
+RakeFile - list of groups of tests to run. (ie. ais_tests)
+aircraft.yml 
+
+contract-service - citests don't go thru Layer7. So citests don't test security.
+bundle exec rake contract_service_tests:all
+
+-------------Build contract-service--------------
+For Contract-service. Don't rely on email, it's incorrect.  Use pom.xml for version.  
+Correct:  com.netjets.contract.service:contract-service-web:9.0.1
+NOT from email: com.netjets.contract.service:contract-service:5.0.1, which has wrong version and missing '-web'
+com.netjets.contract.service:contract-service-web:1.0.1
+
+
+--------------RFC for Release to QA-----------------------
+Build in Jenkins aircraft-service, check "Release" checkbox and make sure pointed to Release/R3 
+Build in Jenkins aircraft-inventory, check "Release" checkbox and make sure pointed to Release/R1
+at end of Console logs, there is --START RFC TEXT--. Copy that version of .ear to RFC 
+
+RFC Process     Refer to CHG0035796 or CHG0037669
+	ServiceNow -> Change -> New
+	Example: 2 applications and a new datasource
+	Teams involved:  cmh-prod support - for standard app 
+	                 cmh-DBA 
+					 cmh-infrastructure app Websphere - because we're adding datasource
+					 cmh-ijet2-contracts&billing - US!  because we can install aircraft-inventory app 
+	Cab: Prod approve only. Blank 
+	Configuration item:  Tomcat server deployed to (bdelamtc01)
+	Desc: "deploy latest versions to QA" 
+	
+	Schedule: Planned start usually Fri 10:00AM
+	Planning: list out the scripts and order to do them here (Ex. Run script, run this ITR, etc.)
+		Example:1) Run scripts per ITR0102370 and ITR0102406 in IJET2QA1 -  DBA team (Notes: Please delete any existing data from the ACFT_AIRCRAFT table if needed;  please  provide password for AIRCRAFT_APP_USER account to Infrastructure resource)
+				2) Deploy latest version of aircraft-service ear to QA Cluster 10 - ProdSupport team
+				3) Deploy latest version of aircraft-inventory-web war to amdev tomcat cluster - Infrastructure team
+				4) Configure context file/datasource for aircraft-inventory-web app in amdev tomcat cluster - Infrastructure team (Notes: Please get password for AIRCRAFT_APP_USER account from DBA resource)
+	Related tasks are listed at the bottom. Once those are 'Closed', it goes to the manager for approval.
+	Software build task - list artifact versions here 
+	Email all mgrs involved under 'Teams Involved', subject "Upcoming RFC"
+		
+When complete, add a file marker to W:\Global Contracts\QA\RFCs
+--------------------ITR process--------------------
+Database Column naming standards on Wiki - Enterprise Data Repository naming standards. Doc - D007_NJ_Entity_DataElement_Naming_Standards V3.docx
+
+Refer to one's created by Neil.
+Put sql files in W:Global_Contracts\AIS\DB Requests\TBD  Then after ITR is assigned, change TBD back to actual ITR#.
+Name of project: GCM
+Database: IJET2DV4 & DV5
+Assignment group:  cmh - DBA 
+Assigned to: Brian Steck 
+Database request type: Database Change 
+Subtype: modify existing object 
+Description:  Modifying tables, blah. Please see spreadsheet at W:\Global Contracts\AIS\DB Requests\ITR0102406
+Admin notes: list .sql file here 
+
+
+----------Process for Release to QA----------------------- 
+1) Create RFC
+	It will create Planning and Software/Build task 
+	Once these 2 are closed, manager will receive email.
+	Once manager approves, it created Implementation and Validation tasks.
+2) Jenkins - perform release build.  By checking 'Release' checkbox.
+3) Jenkins aircraft-inventory-deploy.  Run with com.netjets.aircraft:aircraft-inventory-web:1.0.5, and select 'QA' in dropdown.
+4) The job will trigger tests-itg, which can be cancelled. Then manually kick off aircraft-inventory-tests-qa 
+
+
+------------Run-App--------------------
+Maven can run any grails command... mvn7 grails:{command}
+\aircraft-service\AircraftServiceWeb\mvn7 grails:run-app 
+PROJECT\mvn7 install -DskipTests  -- best to build project at PROJECT level, not WEB level when ready to commit.
+Log found in c:/logs/aircraft-service.log
+
+Current working way to run-app is AircraftServiceWEB>mvn7 grails:run-app
+Build at Project level > mvn7 install
+
+------------Tomcat-------------
+Drop war file in tomcat/webapps
+Deploy happens automatically when war dropped here
+Build war from mvn, not grails war.
+xml files for domains are C:\tools\Tomcat7.0\conf\Catalina\localhost
+conf/settings.xml   autodeploy="true" unpackWars="true" - for autodeployment. I'd prefer false,
+and to login to localhost:8090 and manage deploying myself.  tcadmin/tcadmin   
+
+---------New Services------------
+New web services need defined in Url Mappings
+Wiki search "Layer7 URLs" for list of ITG services
+ie.  "/aircraft/v4/inventoryTypes/$id?"(controller: "inventoryAircraftType", action: "getInventoryAircraftTypes") 
+for localhost:8080/aircraft-service-web/aircraft/v4/inventoryTypes? appAgent=AircraftInventoryUser  (user with proper auth)
+If no id... "/aircraft/v4/fleetGroups"(controller: "fleetGroup") {
+            action = [GET: "getAllFleetGroups"]
+			}
+Locally - http://localhost:8080/aircraft-service-web/aircraft/v3/fleetGroups
+DEV - http://bdla6710:9080/aircraft-service/aircraft-service-web/aircraft/v3/fleetGroups  - no appAgent needed in DEV
+ITG -  servicesdev.netjets.com/aircraft/v4/inventoryTails?appAgent=AircraftInventoryUser - in ITG, appAgent needed
+ITG2 - servicesdev2.netjets.com
+ITG - aircraftinventoryitg1.netjets.com        qatest1 pw:D3p@rtur3
+CI - http://amdev01:6380/    or bcsdev01:9780 for contract-service 
+QA- aircraftinventoryqa.netjets.com
+Currently, Jenkins builds and deploys to ITG.
+Currently, services ONLY builds, but doesn't deploy since it's on Websphere and not Tomcat.  Neil manually deploys it when ready.
+http://amdev01:9080/aircraft-service-web/aircraft/v4/fleetGroups
+
+
+CI server log --->  http://bcsdev01/contract-ci01/contract-service-web.log
+
+-----------Int Tests for services---------------------------
+Integration tests for services can't be run in IDE.  Run at command line. Meaning, no debugging int tests.  It's an issue with Websphere JVM.
+Websphere JVM classloader loads class NodeList that Grails classloader does also, resulting in...
+loading constraint violation: loader "com/ibm/oti/vm/BootstrapClassLoader@570b570b" previously initiated loading for a different type with name "org/w3c/dom/NodeList" defined by loader "org/grails/launcher/RootLoader@56e756e7"
+use ----> AircraftServiceWEB>grails test-app integration: FleetGroupControllerIntSpec
+
+Test framework quit unexpectedly - highlight class of test to debug, not middle of test
+
+---------aircraft-services vs aircraft-inventory----------------
+Services: 
+	Project>mvn7 install - compile and run all tests 
+	Web>mvn7 grails:run-app 
+	Web>grails test-app unit: XXXX
+Inventory:
+	Web>grails run-app 
+Remember that setenv-ai.bat or setenv-as.bat settings are LOST if you close cmd window.
+
+-----------InventoryOnly checkbox for certain roles---------------------
+SpringSecurityUtils.ifNotGranted
+OathCommonPluginGrailsPlugin
+ReflectionUtils.getRoleAuthority
+SecurityTagLib ifAllGranted ****   
+	topHeader.gsp   <sec:ifAnyGranted roles="ROLE_AIS_INVENTORY_ADMIN,ROLE_AIS_INVENTORY_LEGAL_USER,ROLE_AIS_INVENTORY_USER">
+@Secured(['ROLE_AIS_INVENTORY_ADMIN','ROLE_AIS_INVENTORY_LEGAL_USER','ROLE_AIS_INVENTORY_USER','ROLE_AIS_INSURANCE_ADMIN'])
+
+Onclick InvOnly=true  existing search with filters & tail#
+Onclick InvOnly=false search action with filters & tail (with InventoryOnlyFlag=false)
+
+This css doesn't seem to work...
+<g:checkBox class="checkbox-inline" name="inventoryOnly" checked="true" onclick="toggleInventoryOnly();"></g:checkBox>
+
+<g:remoteFunction controller="aircraftInventory"
+                          action="getInventoryDetails"
+                          params="\'fleetGroupId=\'+fleetGroup+\'&aircraftTypeId=\'+aircraftTypeName+\'&companyId=\'+companyId+\'&aircraftStateId=\'+aircraftState+\'&salesStatusId=\'+salesStatus+\'&searchParam=\'+searchQuery+\'&inventoryOnly=\'+inventoryOnly"
+                          update="inventorySearchResults" />
+						
+--------------RFC for QA 7-30-2014--------------------
+Create RFC to push to QA.  CHG0035992
+Refer to same ITRs used for DEV, even though Env says Development.
+
+For Contract-service. Don't rely on email, it's incorrect.  Use:
+com.netjets.contract.service:contract-service-web:9.0.2
+
+------------logs----------------
+Wiki search 'Aircraft Tomcat' to find Aircraft management tomcat servers
+It lists all environments and clusters
+Check both clusters for logs.
+Click Log tab, then aircraft-service-web.log
+
+CI server log ---> http://bcsdev01/contract-ci01/contract-service-web.log
+One instance of a QA log file... http://bqla6714/BQLA6714/aircraft-service/Cluster10/Server038/aircraft-service.log
+
+----------GCM 313 display mocked APTTUS data on results screen--------
+% Available column calculated based on 100% - %PendingIncome
+Share Size filter will display (3.125% instead of fractions)
+Share Size will filter all % Available at or above selected.
+
+------------Conceptual and Logical data models----------------
+http://wiki/display/billing/Aircraft+Inventory+Data+Model
+
+
+--------------ACType create and edit screen---------------------
+CodeService is central class to access code tables, whether it's CodeTableTrans(IJET) or ACFT_CODE_CATEGORY, or other IJET code tables.
+
+def salesStatusCat = AisCodeCategory.build(code: 'SalesStatus', name: 'Sales Status')
+def salesStatusCd = AisCodeType.build(id: 1000, code:1, shortName: 'Selling Add-Ons', category: salesStatusCat)
+
+Bootstrap for TEST now creates SalesStatus codes.  Use them in each INT test like this:
+def salesStatusCategory = AisCodeCategory.findByCode("SalesStatus")
+def salesStatusCodes = AisCodeType.findAllByCategory(salesStatusCategory)
+
+http://bootstrapvalidator.com/settings/  - Docs for bootstrapValidator
+
+-----------
+Hold domain issues.  Couldn't create aircraft, cus of determineSalesStatus was now a map instead of AisCodeType 
+tests around Managed - No Sales, NetJets Insurance issues
+constraint validation - yearMfg max 
+Edit - continue
+
+sales user - qatest3, QAv1at1on!
+Test holds with user - qatest2, QAv1at1on!
+Credentials are found in test application-inventory-tests/features/support/data_helper.rb
+legal_hold.gsp 
+
+http://www.getpostman.com/  - Postman, Test APIs
+http://www.soapui.org/Downloads/thank-you-for-downloading-soapui.html - soap ui docs
+
+http://wiki/display/sharedit/NetJets+OAuth2+Framework
+http://wiki/display/sharedit/Grails+OAuth2+Resource+Server+Plugin
+searched Wiki for 'oath package' found: http://wiki/pages/viewpage.action?pageId=48372098
+
+http://localhost:8080/aircraft-service-web/aircraft/v4/holds
+Content-Type application/json
+Authorization   Bearer 81780ef9-34b3-455d-aee1-4f9312a4d03a
+appAgent AircraftInventoryUser
+{
+                    aircraftId: 46,
+                    holdType: "Legal",
+                    heldBy: "qatest2",
+                    placedOn: "2014-09-22T15:03:00Z",
+                    holdPercent: 3.125,
+                    holdDurationInDays: 2,
+                    note: "notes"
+}
+
+Use SOAP UI to get access token
+https://servicesqareg.netjets.com, or https://servicesdev.netjets.com or https://servicesprod.netjets.com
+give username, password in body.  All other fields like secret key are default.
+It will return an access_token.  Use this in request below...
+
+Policy Falsified - Your operation is incorrect 
+
+
+Curl:
+curl -X post "https://servicesdev.netjets.com/aircraft/v4/holds?access_token=4c7b0953-5ad5-4c47-b727-fab963a4e059&appAgent=AircraftInventoryUser" -H "Content-Type: application/json" -d "{\"aircraftId\":35,\"holdType\":\"Legal\",\"heldBy\":\"sagee\",\"placedOn\":\"2014-10-08T17:23:00Z\",\"holdPercent\":\"3.125\",\"holdDurationInDays\":30,\"note\":\"my note\"}"
+
+curl -X post "https://servicesqareg.netjets.com/aircraft/v4/holds" -H "Content-Type: application/json" -H "appAgent: AircraftInventoryUser" -H "Authorization: Bearer 810dc18c-9d6b-454c-9be3-5e718f2d0a25" -d "{\"aircraftId\":35,\"holdType\":\"Legal\",\"heldBy\":\"sagee\",\"placedOn\":\"2014-10-08T09:46:00Z\",\"holdPercent\":\"3.125\",\"holdDurationInDays\":30,\"note\":\"my note\"}"
+--------------------------Contract-service---------------------
+
+http://localhost:8080/contract-service-web/contract/v3/contracts/1017301?includes=aircraftPerDay&access_token=ff4d454c-7159-48c8-a196-0547c6d2d323&appagent=qatest2
+http://localhost:8080/contract-service-web/contract/v3/contracts/1001795?access_token=bc53ce53-c3bb-48df-8655-14e3794194bd&appagent=qatest2
+
+------------Contact service changes for OpsCheck---------------
+http://bcsdev01:9080/contract-service/contract/v3/contracts?accountId=1000960&includes=aircraftPerDay&access_token=a7857e76-4f6d-4e7e-9034-04564a1b47cd&appagent=qatest2
+
+http://localhost:8080/contract-service-web/contract/v3/contractsForChecks/1008515?access_token=0dc601f0-b34f-47e3-9d33-f53f40387b7e&appagent=AccountManagementUser
+http://localhost:8080/contract-service-web/contract/v3/contracts/1001795?access_token=0dc601f0-b34f-47e3-9d33-f53f40387b7e&appagent=AccountManagementUser
+
+CI contract-service 
+http://bcsdev01:9780/contract-service/contract/v3/contracts/1354494?appAgent=AccountManagementUser&access_token=aef76af0-dbb6-43d9-8c11-d437843e413c
+TQAtest1  
+
+Discovered a bug in VariationService
+
+Variations exist for contract ids and variations exists for Accounts.  But the variationService includes AND between the conditions for account= and contractId=, which will never be true, therefore never returning results if you include account param.
+Existing:  notice AND after accountId=
+
+select this_.CONTRACT_VAR_ID as CONTRACT1_15_0_, this_.SYS_VERSION_NBR as SYS2_15_0_, this_.account_id as account3_15_0_, this_.billing_contract_id as billing4_15_0_, this_.contract_var_type_id as contract5_15_0_, this_.contractual_contract_id as contract6_15_0_, this_.DESCR as DESCR15_0_, this_.external_contract_var_id as external8_15_0_, this_.SYS_LAST_CHANGED_TS as SYS9_15_0_, this_.SYS_LAST_CHANGED_BY_USER_ID as SYS10_15_0_, this_.operational_contract_id as operati11_15_0_ from CONTRACT_VAR this_ where this_.account_id=1001048 
+ and (this_.billing_contract_id=1008463 or this_.operational_contract_id=1008463 or this_.contractual_contract_id=1008463) 
+ and (this_.operational_contract_id is not null) order by this_.CONTRACT_VAR_ID asc;
+ 
+ The logical operators need to be like this:
+ select * from contract_var v where
+v.ACCOUNT_ID = 1001048 or
+(v.operational_Contract_Id = 1008463 or
+v.billing_contract_id = 1008463 or
+v.contractual_Contract_Id = 1008463)
+and v.operational_contract_id is not null;
+
+I corrected the variation service.  We are now getting results if a contractId is a param AND an accountId is a param.
+This is the corrected hibernate sql:
+select this_.CONTRACT_VAR_ID as CONTRACT1_331_0_, this_.SYS_VERSION_NBR as SYS2_331_0_, this_.account_id as account3_331_0_, this_.billing_contract_id as billing4_331_0_, this_.contract_var_type_id as contract5_331_0_, this_.contractual_contract_id as contract6_331_0_, this_.DESCR as DESCR331_0_, this_.external_contract_var_id as external8_331_0_, this_.SYS_LAST_CHANGED_TS as SYS9_331_0_, this_.SYS_LAST_CHANGED_BY_USER_ID as SYS10_331_0_, this_.operational_contract_id as operati11_331_0_ from CONTRACT_VAR this_ where (this_.account_id=? or (this_.billing_contract_id=? or this_.operational_contract_id=? or this_.contractual_contract_id=?)) and (this_.operational_contract_id is not null) order by this_.CONTRACT_VAR_ID asc
+
+ContractService
+ContractServiceIntSpec - add existing test, add test for dateOfCheck
+
+ContractControllerIntSpec - tests show()  seems to be working!
+ContractController show , calls searchContracts which calls contractJSONConverter.buildContract(c, includeOpts)
+contractJSONConverterUtil buildContract -  def contractHours = contractService.getHours(contract)
+
+Current contract-service results::::
+
+http://localhost:8080/contract-service-web/contract/v3/contracts/1001795?access_token=a4ed75ad-c7f6-43fb-83c7-3bedff49c1f4&appagent=AccountManagementUser
+
+Future contract-service results::::  opsCheck
+contractId 1380385 - non-card contract
+http://localhost:8080/contract-service-web/contract/v3/contractsForChecks/1380385?&etd=2014-11-10&access_token=2d556c78-3e14-4c2a-b387-77c6c4cab4ba&appagent=AccountManagementUser
+
+contractId 1408727 - card contract 
+http://localhost:8080/contract-service-web/contract/v3/contractsForChecks/1408727?etd=2014-10-05&access_token=2d556c78-3e14-4c2a-b387-77c6c4cab4ba&appagent=AccountManagementUser
+
+http://localhost:8080/contract-service-web/contract/v3/contractsForChecks/1398253?appAgent=AccountManagementUser&etd=2014-10-08T00:00:00Z&airportId=KCMH&access_token=763db0df-cc37-4925-8409-7d1f95a5fd34
+vs
+http://localhost:8080/contract-service-web/contract/v3/contracts/1398253?appAgent=AccountManagementUser&access_token=99f6a80e-2f5d-4ce1-b2ef-2e9ddfb5cb4c
+
+No longer need etd, just LegId:
+http://localhost:8080/contract-service-web/contract/v3/contractsForChecks/1408727?legId=7899534&airportId=KCMH&access_token=773cdd2c-1205-4065-ae89-b13f06461a65&appagent=AccountManagementUser
+
+Working in ITG:
+https://servicesdev.netjets.com/contract/v3/contractsForChecks/1408727?legId=7899534&appAgent=AccountManagementUser&access_token=31e70c79-ca14-4637-8ee4-5297a64681bf
+
+Working in QA:
+https://servicesqareg.netjets.com/contract/v3/contractsForChecks/1002780?appAgent=AccountManagementUser&legId=264988&access_token=47b84fa3-c206-4f3f-aac4-07df8d77bf67
+http://servicesqareg.netjets.com/contract/v3/contractsForChecks/1002777?appAgent=AccountManagementUser&legId=1318640&access_token=47b84fa3-c206-4f3f-aac4-07df8d77bf67
+
+
+ContractService:
+Using Postman:
+
+https://servicesqareg.netjets.com/contract/v3/contracts/search?access_token=077660bd-ad85-4f69-b665-4fade395d296
+Operation:  PUT
+Headers:   appAgent	AccountManagementUser
+	Content-Type    application/json
+
+Body:  
+{
+    "type": "accountId",
+    "terms": {"accountId": 1002983}
+}
+
+----------------------------------------
+
+select l.legid, l.etd_tm, c.CONTRACT_ID, lcc.contract_rem_hrs
+from leg l
+join leg_contract_charges lcc
+on lcc.leg_id = l.legid
+join netjets_activity_invoice nai
+on nai.invoice_id = lcc.netjets_activity_invoice_id
+join contract c
+on c.CONTRACT_ID = nai.contract_id
+where c.contract_id = 1408727
+and l.legid = 7899534;
+
+
+How and when to use various gorm operations.  Good article.
+http://tatiyants.com/how-and-when-to-use-various-gorm-querying-options/
+
+    static def formatDateToZuluDate(String date) {
+        def sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        sdf.lenient = false
+        sdf.parse(date)
+    }
+	
+----------------Delete Hold--------------------
+Users have the ability to delete the holds that they placed 
+Aircraft Admin have the ability to delete any active hold 
+When user clicks Delete Hold, users prompted with confirm box 
+Audit
+
+curl -X post "https://servicesdev.netjets.com/aircraft/v4/holds?access_token=65d7bf3b-946b-424e-9176-bef8d7b2ccf3&appAgent=AircraftInventoryUser" -H "Content-Type: application/json" -d "{\"holdId\":2315,\"aircraftId\":35,\"holdType\":\"Legal\",\"heldBy\":\"qatest1\",\"placedOn\":\"2014-10-23T14:53:00Z\",\"holdPercent\":\"3.125\",\"holdDurationInDays\":30,\"note\":\"my note\"}"
+
+select leg.etd_tm, lc.contract_rem_hrs as contract_rem_hrs,
+  nai.billing_cycle_ts as billing_cycle_ts,
+  ch.ACTIVITY_START_DAT as asd, ch.ACTIVITY_END_DAT as aed from leg leg
+  left outer join leg_contract_charges lc
+  on leg.LEGID=lc.leg_id
+  left outer join netjets_activity_invoice nai
+  on lc.netjets_activity_invoice_id=nai.invoice_id
+  left outer join CONTRACT c
+  on nai.contract_id=c.CONTRACT_ID
+  left outer join CONTRACT_HRS ch
+  on c.CONTRACT_ID=ch.CONTRACT_ID
+  where ch.CONTRACT_ID=1348184   and (nai.invoice_status_cd in (1 , 2))
+  and (lc.contract_rem_hrs is not null)
+  and leg.etd_tm >  to_date('2014-02-08', 'yyyy-mm-dd')
+  and nai.billing_cycle_ts>=  to_date('2014-02-01','yyyy-mm-dd')
+  and nai.billing_cycle_ts<= to_date('2015-02-01','yyyy-mm-dd')
+  order by nai.billing_cycle_ts desc, leg.etd_tm desc;
+  
+  Building big data repo
+  http://www.devx.com/enterprise/big-data-technologies-content-repository.html
+
+For delete operation with param instead of body, with Security on, specifying application/json WILL NOT WORK!!  
+curl -X DELETE "http://localhost:8080/aircraft-service-web/aircraft/v4/holds/2951" -H "Content-Type:application/json" -H "appAgent:AircraftInventoryUser" -H "Authorization: Bearer 5dab7d8c-b75d-49ef-8a1e-59769bc32957" 
+
+Params cannot have URL param of content-type. So THIS works.
+curl -X DELETE "http://localhost:8080/aircraft-service-web/aircraft/v4/holds/2951" -H "appAgent:AircraftInventoryUser" -H "Authorization: Bearer 5dab7d8c-b75d-49ef-8a1e-59769bc32957" 
+
+------------Read only accounts------------------
+MARS	Prod		Jerry Starkey	- Ravi will request
+IJET2	RPT Prod	Srikanth		- Me!  				ITR0103083
+ABS		QA			Joao			- Ravi will request 
+CMS-NJE	QA			Joao			- Ravi will request 
+
+---------Contract service, remove SOAP services-------------
+Config.groovy lists endpoints
+each endpoint service can be removed 
+remove pom.xml springws section 
+
+ijet2locator 142.0.1 was missing from Nexus, but css-security-plugin required it.  Changed m2 plugin to point to 142.0.2
+no longer need ibm-jdk or websphere references in pom.xml 
+remove tests that may just be commented out 
+
+
+W:\Enterprise Architecture\Data Architecture\Data Analysis_CurrentState\Server_Database_Names\  location for server names
+
+select * from contract;
+select * from account;
+select * from program;
+select * from AUTHORIZATION;
+select * from INDIVIDUAL;
+select * from ACCOUNT_ROLE;
+
+----------remove SOAP services from contract-service, ensure old JSON services still work-----------------
+Test external users:
+m.zuckerberg@any.domain.cc
+abc123ABC
+t.olofson@any.domain.cc
+abc123ABC
+m.smokler@any.domain.cc
+abc123ABC
+
+"/contract/v3/contracts/$id?"(resource: "contract")  - works for t.olofson. contractId 1016055
+http://localhost:8080/contract-service-web/contract/v3/contracts/1016055?appAgent=AccountManagementUser&access_token=3581a390-8f64-4314-b1a2-9a3b282b8caf
+
+"/contract/v3/variations/$id"(controller: "contractVariation") {  - works for TQATEST1  variationId 1000134
+    action = [GET: "show"]
+http://localhost:8080/contract-service-web/contract/v3/variations/1000134?appAgent=AccountManagementUser&access_token=e18869f9-08bc-4ff8-83ff-8d00932ae94f
+        }
+"/contract/v3/variations/?"(controller: "contractVariation") { 
+    action = [GET: "list"]
+        }
+"/contract/v3/contractsForChecks/$contractId?"(controller: "contractsForChecks") {  - works for qatest2, with following URL
+    action = [GET: "list"]
+        }
+http://localhost:8080/contract-service-web/contract/v3/contractForChecks/1408727?legId=7899534&airportId=KCMH&appAgent=AccountManagementUser&access_token=e18869f9-08bc-4ff8-83ff-8d00932ae94f
+		
+"/program/v3/programs/$id?"(resource: "program")  - works, no security check using the following URL
+http://localhost:8080/contract-service-web/program/v3/programs/1000011
+
+"/program/v3/ejCompanies/$id?"(controller: "ejCompany",action: 'show')  - works, no security check using following URL
+http://localhost:8080/contract-service-web/program/v3/ejCompanies/1000015
+
+--------------Switch Config file to use ADAM group instead of AD group----------------
+Just for variation service, switch from TestAPPCrossroadsInvoiceRebillers (AD group) to CrossroadsInvoiceProcessorServiceGroup (ADAM group)
+test using...  UID: crossroads   PWD: cr0ssR0aDs
+'CrossroadsInvoiceProcessorServiceGroup': [new GrantedAuthorityImpl('ROLE_VARIATION_READ')]
+          ^ AD group or ADAM group                                     ^ role used in controller 
+		  
+Brian Gregory resets ADAM group user creds 
+servicedesk@netjets.com resets AD group users 
+
+-----Good client side security rant
+http://stackoverflow.com/questions/23896690/securing-oauth-clientid-clientsecret-in-angularjs-application
+		  
+-------------Create Card Contract / to be used by Apttus----------------
+Card sync is here:
+http://stash.netjets.com/projects/CON/repos/card-sync-services/browse/CardSyncServicesEJB/src/com/netjets/card/synchronization/sb
+
+contractServiceImpl
+http://stash.netjets.com/projects/IJET/repos/ijet2-mt/browse/core/src/java/com/netjets/bus/contract/sb
+
+DTO classes
+http://stash.netjets.com/projects/IJET/repos/esl-services/browse/ContractCommonJAVA/src/com/netjets/esl/contract/CardDetailDTO.java
+
+http://stash.netjets.com/projects/IJET/repos/esl-services/browse/ContractEJB/src/com/netjets/esl/contract/sb/ContractServiceBean.java
+
+ESL looks like mostly pass-thru logic
+
+usages of ContractDTO:
+CardSynchronizationServiceImpl.handleAddCard
+CardSynchronizationServiceImpl.findCardDetailsByCardNumbers - first gets cardInfos, then cardInfos[a].getContracts();
+CardSynchronizationServiceImpl.getCardInfos - CardDetailDTO [] cardDetailDTOs =cardService.findCardsByAccountId(accountId, cardFilterCriteriaDTO,sortCriteria);
+                                              cardInfos=CardConverter.toCardInfos(cardDetailDTOs);
+CardServiceBean.findCardsByAccountId
+CardConverter.toCardDetailDTO
+CardConverter.setCardBaseAttributes - creates CardDTO from Card
+CardServiceBean.populateContractDetails
+CardServiceBean.createCardContract
+
+Once card/contract info lands in IJET, any manual intervention is assoc with Account.  from default account.
+
+Nested json request
+http://stackoverflow.com/questions/18625495/how-do-you-properly-bind-a-list-of-objects-into-a-grails-command
+
+Contract - why is contractId assigned?  S_CONTRACT sequence exists.
+
+-------contract template------
+select ct.CONTRACT_TYPE_ID, ct.SHARE_SIZE, ct.AIRCRAFT_TYPE_NAME, ct.program_id, ct.flight_rule_id, ct.min_leg_tech_stop_addl_fee, ct.template_desc, ct.peak_date_list_cd, ct.ppd_billing_restrictions
+from contract_template ct
+where ct.AIRCRAFT_TYPE_NAME = 'DA-2000' and ct.CONTRACT_TYPE_ID =8
+order by ct.CONTRACT_TYPE_ID, ct.SHARE_SIZE, ct.aircraft_type_name, ct.flight_rule_id;
+
+
+GrailsUnitTestMixin.groovy   mockForConstraintsTests - mocks a command obj so that validate() can be called
+
+Build ETL
+http://wiki/display/billing/1.7.8+Build+ETL+from+CLM+to+Operational+Systems+for+Cards
+new API
+http://wiki.netjets.com/display/CSS/Create+Contract+API
+
+IJET build contract
+http://wiki/display/billing/1.7.8.3.1+25-Hour+Card+Contracts+Written+to+IJET+from+Contract+Service
+
+found in.....reservation-service/ReservationServiceWEB/grails-app/controllers/com/netjets/reservation/
+ if(legCommand.hasErrors()){
+            def errorMessages = legCommand.errors.allErrors.collect([]){
+                messageSource.getMessage(it, Locale.default)
+            }
+            log.error(errorMessages)
+
+            //throw custom exception with those errors
+            throw new CommandObjectValidationException("Validation Errors from Command Object", legCommand.errors)
+        }
+
+--------------Fowarding Engine-------------------
+As I understand it, when using ‘kcanfield’ the inserts went directly against the table, but when using ‘contract_app_user’ they went against the forwarding engine (FE) views.  The FE views are not as strict with validation as the actual tables they represent.  I suspect this is because a view can’t have a foreign key constraint.
+
+Additionally, when using ‘contract_app_user’ to insert data we would never see the data in the database.  As it turns out, this was also explainable too.  The insert to the view simply put the data in a queue, but no instance of IJet2 mid-tier was running the forwarding engine to pick up those entries from the queue and insert into the database.
+
+Now that we understand how the FE works we’ll be able to test with more clarity.  
+
+
+I think we can break it down to these four cards:
+
+(1)	The basic card contract consists of the following related entities:
+
+•	CONTRACT_BASE
+•	CONTRACT_DETAIL
+•	DIVISION
+•	CARD
+•	FUEL_CHARGE
+
+The contract is viewable in IJet2 after the above have been set with correct field values.
+
+(2)	The next breakdown adds more card specific data to the contract:
+
+•	CONTRACT_CHARGE (for positioning and excess level1 hours)
+•	CONTRACT_PREPAID_CHARGE (for regular and bonus hours)
+•	PREPAID_CHARGE_TOTAL (for managing the blended hourly rate and fet blended rate)
+•	CONTRACT_HRS
+
+(3)	Then comes the  entities that define response times, variations, and international minimums:
+
+•	RESP_TM_AND_CANCEL_MIN (for primary airport zone, Alaska/Hawaii, and  <225 zone)
+•	INTL_POSITIONING_MIN
+•	CONTRACT_VAR
+
+(4)	Finally, the change logs (not needed for billing)…
+
+•	CONTRACT_FIELD_CHANGE_LOG
+•	CONTRACT_CHANGE_LOG
+
+Working URL:
+http://bcsdev02:9180/contract-service/contract/v3/contracts?access_token=80dcea3f-8c7b-4465-809e-8126cd6a060a
+
+
+Get contract from IJET:
+http://cmhqatds01:9292/retrieveContract?contract_id=1409484
+
+Contract Service ITR tracking:
+http://wiki.netjets.com/pages/viewpage.action?title=Contract+Service+Release+Tracking&spaceKey=billing
+
+---------IJET test data service--------------
+script from Branden - shows IJET info without actually using IJET2.
+http://testdataservice-itg1.netjets.com/contract?contract_id=1417104
+
+-------------------OCMS----------------------
+ITG:   https://ocmsitg1.netjets.com/operational-cms-web/
+
+Ports, probe, logs for all env--------------------------
+http://amdev01/apps-bin-cgi/deployments?env=itg1
+
+------------ETM---------------
+ITG1  http://tripitg1.netjets.com/trip-management-web
+
+------------------Preferences Service-----------------
+W:\Architecture\Tools\Preference Service Visualizer
+
+appAgent: IJet2GUI
+CLIENT_ID = "cf574cd3-4216-4568-a60f-f0e824f08c17";
+CLIENT_SECRET = "0bde98f8-d5dc-4e0a-9391-88f38264af3c";
+
+https://servicesdev.netjets.com/preference/v1/environments/dev?access_token=a94aee88-7040-4e3c-a533-11333b3c7b55
+POST
+{
+    "username": "sagee",
+    "application": "ocms",
+    "company": "NJA",
+    "dateFormat": "DD/MM/YYYY"
+}
+
+--------ClientId and Client Secret-------------
+Oauth plugin creates files in your application /config/project.xml and /config/properties.xml 
+Store the clientId and ClientSecret in here.  In prod, the properties are overriden.
+You can access these properties like this:  ApplicationContext.property.{name} 
+See example in SocTrack or OCMS.
+
+-----Sort spaceship operator---
+(retVal) ? retVal.toList().sort{ a, b -> b.placedTs <=> a.placedTs } : []
+
+---------Quartz tables-------------
+select * from CNTR_QRTZ_JOB_DETAILS;
+select * from CNTR_QRTZ_TRIGGERS;
+select * from CNTR_QRTZ_CALENDARS;
+
+-----------------Fuel Rates---------------------
+JIRA 1.9.6.3, 1.9.6.4 , 1.9.6.2 
+The Monthly Column Calculation will be: ((Monthly Average Fuel Cost - Established Rate)/Differential) * Fuel Variable Rate
+
+-----------Peak Period days----------------
+Confirmation popup for delete                 X
+Only can delete rows that have not passed     X
+DD/MM/YYYY for NJA/User Settings	    	  X
+Only edit future dates and only active lists  X
+Cancel needs to work                          X
+Navigate away
+
+------------AngularJS Get started-------------
+Steps to get started 
+http://vitalets.github.io/angular-xeditable/
+
+---------Angular promises explained----------
+http://andyshora.com/promises-angularjs-explained-as-cartoon.html
+
+----------Angular rootscope-----------
+http://thenittygritty.co/angularjs-pitfalls-using-scopes
+
+-----Scroll bars and sticky table headers----
+http://www.datatables.net/examples/basic_init/scroll_y_theme.html
+
+-----Installing node.js, Jasmine, Karma--------------
+https://nodejs.org/
+Automatically puts node.js in your classpath.
+Then navigate to your project's Web folder and issue following npm install commands:
+http://karma-runner.github.io/0.12/intro/installation.html
+http://karma-runner.github.io/0.12/intro/configuration.html
+
+npm - node package manager.  Used to install node programs.  npm can install karma 
+
+Install phantomJS:  (headless browser)  Supposedly 1/3 faster than Chrome for running tests.
+npm install karma-phantomjs-launcher --save-dev
+
+
+------Running Jasmine tests-----------
+\OperationalCmsWeb\angularSpec\spec\karma start ocms.conf.js  
+
+all application js files need to be spelled out in ocms.conf.js, or else 'Module fuelRate not available!'
+
+--------Jasmine verify DOM elements-----------
+http://www.htmlgoodies.com/beyond/javascript/js-ref/testing-dom-events-using-jquery-and-jasmine-2.0.html
+
+-------------Airport Service-----------------
+http://wiki/display/CSS/REST+Airport+API
+
+https://servicesdev2.netjets.com/airport/v3/airports?searchTerm=USA&isCached=true&appAgent=TripManagementUser
+http://localhost:8080/airport-service-web/airport/v3/airports?searchTerm=columbus&isCached=true
+http://localhost:8080/airport-service-web/airport/v3/airports?airportId=CMH
+http://localhost:8080/airport-service-web/airport/v3/airportRegions?searchString=cmh&fieldName=airportId
+http://localhost:8080/airport-service-web/airport/v3/airportRegions?searchString=columbus&fieldName=city
+https://servicesdev2.netjets.com/airport/v3/airportRegions?searchString=CMH&fieldName=airportId&appAgent=OCMSUser
+
+http://localhost:8080/airport-service-web/airportCollection/refresh   - DO NOT use to refresh Airport Collection to add StateName. Obsolete. Manas runs .net script insead.
+
+
+--------------Tab across multiple fields-----------------
+self.hide = function() {  
+self.editorEl.remove();  
+$element.removeClass('editable-hide');  
+$element.focus();  
+// onhide  
+return self.onhide();};
+
+----------Delete hold fails - date 7/31/2015------------
+Error occurred in delete of legal hold, response status is                 422 and optional error details are [errors:[[application:/aircraft-service-web, description:Param holdId value 7,585 references a hold that expired at 07/31/2015 00:00:00Z that therefore cannot be deleted, serverTime:2015-07-31T13:04:56.577Z
+
+Date should be set to last second of the date, not 00:00:00.  On 7/31 it thought an expiration of 7/31 had already past.
+
+------------OCMS contractSearch-----------------
+http://localhost:8080/operational-cms-web/contractSearch/contractDetails?opContractId=683   - to get contract details, for Account 
+http://localhost:8080/operational-cms-web/contractSearch/contractDetails?opContractId=9953
+
+Angular routing example:
+http://embed.plnkr.co//preview
+
+Routing only works with ng-view with template layout as "main" page.  If specs say pop-up new tab, cannot route.   65485
+
+-----------Bootstrap Components---------------
+http://getbootstrap.com/components/
+
+-------------Preference Service-----------------
+GET       https://servicesdev.netjets.com/preference/v1/environments/dev/applications/ocms?userId=qatest1&access_token=00bb6b35-2933-4702-b65e-5ef0ab04dbdb
+    appAgent=IJet2GUI
+DELETE    https://servicesdev.netjets.com/preference/v1/55268fdee4b0e9acae568746?access_token=cf8b0c6e-6ea8-4c05-947e-81ae0e755a2a
+	-deletes and _ID that's returned from the GET. (ie.  56014a4ae4b01e1b6d2779a1 is me)
+	
+	Test with:  qatest2 in TestBillingAdminNJA AD group     pw:  DeP@rture1
+	
+	https://github.com/shawnagee/notes.git

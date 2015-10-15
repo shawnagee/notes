@@ -1,0 +1,50 @@
+
+_physicianSelctor.gsp includes javascript below.
+<div id="search-physicians" data-url="${createLink(controller: 'util', action: 'searchPractitioners')}">
+<input type="button" value="Search" onclick="physicianSelector.search()"/>
+
+physicianSelector.js
+    my.search = function()  -- ajax call to #search-physicians
+	   $.ajax({
+      url: $('#search-physicians').data('url'),       -- ajax call from which div, and 'url' is a link to controller/action
+      data: {
+        lastName: $('#psLastName1').val(),
+        firstName: $('#psFirstName1').val(),
+        phone: $('#psPhone1').val(),
+        npi: $('#psNpi1').val(),
+        city: $('#psCity1').val(),
+        state: $('#psState1').val(),
+        zip: $('#psZip1').val(),
+        dea: $('#psDea1').val()
+      },
+      success: function(data, textStatus, jqXHR) {     -- do what with results from controller/action. 
+        if (data.errors) {
+          var message = "";
+          $.each(data.errors, function(index, value) {
+            message += value + "\n";
+          });
+          alert(message);
+          return;
+        }
+		console.log(data);  --cool way to show the data
+
+        $('#search-physicians div.results-body').html(data);
+				OR
+		$j('#customerList').replaceWith(data); --to replace entire <tr>
+      }
+    });
+UtilController
+    def searchPractitioners(PractitionerSearchCommand command) {
+
+        if (command.hasErrors()) {
+            render(contentType: "text/json", text: [errors: command.errors.allErrors.collect { message(error: it, encodeAs: 'HTML')}] as JSON)
+            return
+        }
+
+        def results = practitionerService.search(command)
+        render(contentType: "text/html", template: "/templates/physicianSelector/physicianSelectorResults", model: [practitioners: results])
+    }
+	
+On Grails 1.3.5 Controller action needs to be defined as...  'def method = {' and not 'def method(params) {'  or else it won't be found.
+	
+We render a template at the end of the action.  the success: part of the ajax call should take the rendered results and forward to div to re-render.

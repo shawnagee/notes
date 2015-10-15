@@ -1,0 +1,113 @@
+Grails Notes
+
+
+
+Config.groovy - runtime environment params
+	like -  productCatalog.createOrUpdate.service.url = "http://localhost:9090/healthesystems-product-catalog-web/ProductRecordWebService?wsdl"
+access like this:
+    def getServiceUrl() {
+        ConfigurationHolder.config.productCatalog.createOrUpdate.service.url
+    }
+	
+ServletContext contains...
+application-wide parameters
+application event listeners
+metadata about the application
+
+
+Grails Transactional    http://blog.octo.com/en/transactions-in-grails/
+
+
+For delete operation with param instead of body, with Security on, specifying application/json WILL NOT WORK!!  
+curl -X DELETE "http://localhost:8080/aircraft-service-web/aircraft/v4/holds/2951" -H "Content-Type:application/json" -H "appAgent:AircraftInventoryUser" -H "Authorization: Bearer 5dab7d8c-b75d-49ef-8a1e-59769bc32957" 
+
+Params cannot have URL param of content-type. So THIS works.
+curl -X DELETE "http://localhost:8080/aircraft-service-web/aircraft/v4/holds/2951" -H "appAgent:AircraftInventoryUser" -H "Authorization: Bearer 5dab7d8c-b75d-49ef-8a1e-59769bc32957" 
+
+
+GrailsUnitTestMixin.groovy   mockForConstraintsTests - mocks a command obj so that validate() can be called
+
+
+Nested CommandObjects:
+@ToString(includeNames = true)
+@Log4j
+@Validateable
+class CreateContractCommand {
+
+    Long salesforceOpportunityId
+    Long salesforceAgreementId
+    Long accountId
+    Long contractTypeId
+    Card card
+    List<ContractCommand> contracts = []
+
+    static constraints = {
+        salesforceOpportunityId nullable: false, blank: false
+        salesforceAgreementId nullable: false, blank: false
+        accountId nullable: false
+        contractTypeId nullable: false
+        card nullable: false
+        contracts validator: validateEveryValue
+    }
+//    boolean validateCard(val,obj,errors){
+//        log.trace("Entered validator for validateCard with val ${val}, obj ${obj}")
+//        boolean isValid = true
+//        if(val == null) {
+//            errors.rejectValue('cardContract', 'com.netjets.CreateContractCommand.createCardContract.nullable.error',
+//                    ['contractCreate', val] as Object[], "Param {0} cannot be null")
+//        }
+//       isValid
+//    }
+    protected static validateEveryValue = { value -> value.every { it?.validate() } }
+
+}
+
+
+@Validateable
+class ContractCommand {
+
+    ContractBase contractBase
+    ContractDetail contractDetail
+    List<ContractHours> contractHrs
+    List<ContractVariation> contractVariations = []
+    List<ContractPrepaidCharge> contractPrepaidCharge
+    List<ContractCharge> contractCharge
+    Division division
+
+    static constraints = {
+        contractBase nullable: false, validator: validateValue
+        contractDetail nullable: false
+        contractHrs nullable: false
+//        contractVariations validator: validateEveryValue
+        contractVariations nullable: true
+        contractPrepaidCharge nullable: false
+        contractCharge nullable: false
+        division nullable: false
+    }
+
+    protected static validateValue = { value -> value.validate() }
+    protected static validateEveryValue = { value -> value.every { it?.validate() } }
+}
+
+Unit test for nested cmd obj validation:
+    def "Test to create Card contract with Valid Card and Valid Contract values but contract Hours are null Expects Illegal Argument Exception"(){
+        given:"Valid Card Contract data with one constraint violation of aircraftTypeName maxSize exceeded on ContractBase"
+            mockForConstraintsTests(ContractBase)
+            Card card = Card.build()
+            ContractVariation variation = ContractVariation.build(accountId: 123456789101)
+            ContractBase cBase = ContractBase.build()
+            ContractCommand contract = new ContractCommand(contractBase: cBase,contractDetail: ContractDetail.build(),
+                    contractHrs:[ContractHours.build()],contractCharge:[ContractCharge.build()],contractPrepaidCharge: null,contractVariations: [variation],division:Division.build())
+
+            CreateContractCommand cmd = new CreateContractCommand(salesforceOpportunityId:006E000000,salesforceAgreementId:006E0000012,
+                    accountId: 1023456,contractTypeId: 2,card:card,contracts: [contract])
+            contract.contractBase.aircraftTypeName = acName
+        when:"Call validate on the parent command obj"
+            cmd.validate()
+        then:"I should see field level error on child command obj"
+            cmd.errors
+            cBase.errors['aircraftTypeName'] == error
+        where:
+          acName              |  error
+          '1234567890123456'  | 'maxSize'
+    }

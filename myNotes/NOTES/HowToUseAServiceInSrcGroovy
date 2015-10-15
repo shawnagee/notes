@@ -1,0 +1,43 @@
+Creating your own ApplicationContextHolder in Sources:groovy/ifx.admin allows you to use services in src/groovy 
+  by pulling them in like this:  ApplicationContextHolder.getBean("lookupService")
+
+
+
+
+ApplicationContextHolder
+@Singleton
+class ApplicationContextHolder implements ApplicationContextAware {
+
+    private ApplicationContext ctx
+
+    @Override
+    void setApplicationContext(ApplicationContext applicationContext) {
+        ctx = applicationContext
+    }
+
+    static ApplicationContext getApplicationContext() {
+        getInstance().ctx
+    }
+
+    static Object getBean(String name) {
+        getApplicationContext().getBean(name)
+    }
+
+    static PmiUser currentUser() {
+        try {
+            return WebUtils.retrieveGrailsWebRequest().getSession().user
+        } catch (IllegalStateException e) {
+            return null
+        }
+    }
+}
+
+
+AddRefContactOperation
+	performOperation() {
+	   def title = lookupService.getPmiCodes(blah...)
+	}
+
+    private LookupService getLookupService() {
+        ApplicationContextHolder.getBean("lookupService")
+    }

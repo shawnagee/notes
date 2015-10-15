@@ -1,0 +1,265 @@
+Use SOAP UI to get access token
+https://servicesqareg.netjets.com, or https://servicesdev.netjets.com or https://servicesprod.netjets.com
+give username, password in body.  All other fields like secret key are default.
+It will return an access_token.  Use this in request below...
+
+
+Curl:
+curl -X post "https://servicesdev.netjets.com/aircraft/v4/holds?access_token=48f33ba1-6a4c-4687-8fc8-860ed443175b&appAgent=AircraftInventoryUser" -H "Content-Type: application/json" -d "{\"aircraftId\":35,\"holdType\":\"Legal\",\"heldBy\":\"sagee\",\"placedOn\":\"2014-09-24T10:01:00Z\",\"holdPercent\":\"3.125\",\"holdDurationInDays\":30,\"note\":\"my note\"}"
+
+curl -X post "https://servicesqareg.netjets.com/aircraft/v4/holds" -H "Content-Type: application/json" -H "appAgent: AircraftInventoryUser" -H "Authorization: Bearer dbaebb49-117e-43d1-ae08-75a66c11b24f" -d "{\"aircraftId\":35,\"holdType\":\"Legal\",\"heldBy\":\"sagee\",\"placedOn\":\"2014-09-25T11:19:00Z\",\"holdPercent\":\"3.125\",\"holdDurationInDays\":30,\"note\":\"my note\"}"
+--------------------------Contract-service---------------------
+
+http://localhost:8080/contract-service-web/contract/v3/contracts/1017301?includes=aircraftPerDay&access_token=ff4d454c-7159-48c8-a196-0547c6d2d323&appagent=qatest2
+http://localhost:8080/contract-service-web/contract/v3/contracts/1001795?access_token=bc53ce53-c3bb-48df-8655-14e3794194bd&appagent=qatest2
+ 
+ 
+ curl -X post "http://localhost:8080/aircraft-service-web/aircraft/v4/holds?access_token=19c6c3ca-b067-444f-993e-c262ff9f838e&appAgent=AircraftInventoryUser" -H "Content-Type: application/json" -d "{\"aircraftId\":35,\"holdType\":\"Legal\",\"heldBy\":\"qatest2\",\"placedOn\":\"2014-09-24T10:19:00Z\",\"holdPercent\":\"3.125\",\"holdDurationInDays\":30,\"note\":\"my note\"}"
+ 
+ curl -X POST "http://localhost:8080/aircraft-service-web/aircraft/v4/holds" -H "Content-Type:application/json" -H "appAgent:AircraftInventoryUser" -H  "Authorization: Bearer 005efd63-12f9-4898-a0e8-3cfd4e12db2d" -d {\"aircraftId\":35,\"holdType\":\"Legal\",\"heldBy\":\"sagee\",\"placedOn\":\"2014-09-24T09:52:00Z\",\"holdPercent\":\"3.125\",\"holdDurationInDays\":30,\"note\":\"my note\"}
+ 
+ Working
+  curl -X post "https://servicesqareg.netjets.com/aircraft/v4/holds" -H "Content-Type: application/json" -H "appAgent: AircraftInventoryUser" -H "Authorization: Bearer dbaebb49-117e-43d1-ae08-75a66c11b24f" -d "{\"aircraftId\":35,\"holdType\":\"Legal\",\"heldBy\":\"sagee\",\"placedOn\":\"2014-09-25T15:25:00Z\",\"holdPercent\":\"3.125\",\"holdDurationInDays\":30,\"note\":\"my note\"}"
+ 
+ Diwakar test
+ https://servicesqareg.netjets.com/aircraft/v4/holds
+I, [2014-09-25T10:50:02.076000 #8740]  INFO -- : Data : {:aircraftId=>48, :holdType=>"Legal", :heldBy=>"Automaton - Shawn", :placedOn=>"2014-09-25T14:50:01Z", :holdPercent=>3.125, :holdDurationInDays=>30, :note=>"this is note created by automation tests."}
+I, [2014-09-25T10:50:02.077000 #8740]  INFO -- : auth : {:headers=>{:Authorization=>"Bearer fd5bf9cf-e892-4af2-b382-16e1187e8bf4"}}
+
+{
+                    aircraftId: 46,
+                    holdType: "Legal",
+                    heldBy: "qatest2",
+                    placedOn: "2014-10-08T09:43:00Z",
+                    holdPercent: 3.125,
+                    holdDurationInDays: 2,
+                    note: "notes"
+}
+
+
+Create Contract:
+http://localhost:8080/contract-service-web/contract/v3/contracts?access_token=ac466d57-2380-47c8-8816-087a9f4e97c3
+Content-type  application/json
+appAgent   AccountManagementUser
+
+body:
+{
+  "salesforceOpportunityId": "006E000000KuykxIAB",
+  "salesforceAgreementId": "006E000000KuykxIAA",
+  "legalName": "Facebook",
+  "contractTypeId": 17,
+  "card": {
+    "cardNumber": "954098208791",
+    "cardType": 1,
+    "activationDate": "2014-12-16T14:00:00+00:00",
+    "expirationDate": "2015-12-16T14:00:00+00:00",
+    "cardStatus": 1,
+    "cardHolderName": "John Doe",
+    "contractualHrs": 25,
+    "customerLegalName": "John Thomas Doe",
+    "customerFirstName": "John",
+    "customerLastName": "Doe",
+    "cardSalesVP": "John Seller"
+  },
+  "contracts": [
+    {
+      "program":"NJA",
+      "tailId": 1015643,
+      "aircraftTypeName": "CL-300",
+      "crewExpensAmt": 100.2,
+      "operatingFundAmt": 200.1,
+      "excsHoursLimitType": null,
+      "allowExcsHoursBeyondLimitFlag": true,
+      "crewExpensePaidByCustFlag": true,
+      "cateringExpensPaidByCustFlag" : true,
+      "gndExpensePaidByCustFlag": true,
+      "intlExpensePaidByCustFlag": true,
+      "minLegWaiverCarryOverFlag": true,
+      "ejRightToChangeDeptHours": 3,
+      "lvlOneExcsHours": null,
+      "lvlTwoExcsHours": 25,
+      "liabilityForDelayMaxHours": 2,
+      "minHoursPerDay": 99.9,
+      "minHoursPerLeg": 1,
+      "flightRuleId": 2,
+      "contractTypeId": 7,
+      "invoiceCreditTypeId": 0,
+      "minLegTechStopAddlFee": 200,
+      "minLegWaiversUsed": 2,
+      "shareSize": 6.25,
+      "taxiTm": 0.2,
+      "warRiskPremium": null,
+      "warRiskFlag": false,
+      "peakDateListCd": 2,
+      "ppdOperationalRestrictions": true,
+      "ppdBillingRestrictions": false,
+      "ppdPreventFlights": false,
+      "cardId": null,
+      "commercial": true,
+      "euEtsParticipantFlag": true,
+      "cardTypeId":3,
+      "contractEndDate": "2016-09-02T14:00:00Z",
+      "contractStartDate": "2019-09-02T14:00:00Z",
+      "contractStatusId": 2,
+      "flightRuleIdDomestic": 4,
+      "flightRuleIdIntl": 4,
+      "expEligibilityFlag": "F",
+      "isPayfFet": null,
+      "isPayfEscalation": null,
+      "externalContractId": null,
+      "delayedStartFlag": null,
+      "splitPaymentFlag": null,
+      "delayedStart": null,
+      "extendedTermEnd": null,
+      "highUtilizationFlag": "F",
+      "enablePrepaymentFlag": null,
+      "opportunityId": null,
+      "contractHours": [
+        {
+          "allottedHrs": 50,
+          "annualAvailHrs": 62.5,
+          "yearNumber": 1,
+          "startDate": "2014-01-01T14:00:00Z",
+          "endDate": "2015-09-02T14:00:00Z",
+          "totAllottedHours": 50,
+          "totalAvailHrs": 50,
+          "remainingAllottedHrs": 50,
+          "remainingAvailableHours": 50,
+          "cumlRollOverForNextYr": null
+        }
+      ],
+      "variation": [
+        {
+          "description": "Reasonableinflightcateringonly",
+          "contractVarTypeId": 2
+        }
+      ],
+      "contractPrepaidChargeInfo": [
+        {
+          "chargeTypeCode": 2,
+          "quantity": 25,
+          "rate": 9048.72,
+          "totalAmount": 22622,
+          "fet": 2000.3,
+          "changeLog": null,
+          "escalationFlag": false
+        }
+      ],
+      "contractCharge": [
+        {
+          "hourlyRateTypeId": 10,
+          "amt": 800.2,
+          "billingCycleTS": "2014-10-02T14:00:00Z",
+          "effectiveDate": "2014-09-02T14:00:00Z"
+        }
+      ]
+    }
+  ]
+}
+
+
+ITG1:
+https://servicesdev.netjets.com/contract/v3/contracts?access_token=d5942e3d-96eb-41d7-96fa-e20be848be25
+Content-type  application/json
+appAgent   AccountManagementUser
+using qatest1 user 
+{
+        "salesforceOpportunityId": "006E000000KuykxIAB",
+        "salesforceAgreementId": "006E000000KuykxIAA",
+        "legalName": "Facebook",
+        "arNumber":"19334",
+        "card": {
+            "cardNumber": "9701237527864",
+            "cardType": 1,
+            "cardHolderName": "John Doe",
+            "customerFirstName": "John",
+            "customerLastName": "Doe",
+            "cardSalesVP": "John Seller"
+        },
+        "contracts": [
+            {
+                "program": "MJP",
+                "tailNbr": null,
+                "aircraftTypeName": "CE-560XL",
+                "crewExpensAmt": null,
+                "operatingFundAmt": 0.00,
+                "excsHoursLimitType": null,
+                "allowExcsHoursBeyondLimitFlag": false,
+                "crewExpensePaidByCustFlag": true,
+                "cateringExpensPaidByCustFlag": false,
+                "gndExpensePaidByCustFlag": true,
+                "intlExpensePaidByCustFlag": true,
+                "minLegWaiverCarryOverFlag": true,
+                "ejRightToChangeDeptHours": 3,
+                "lvlOneExcsHours": null,
+                "lvlTwoExcsHours": null,
+                "liabilityForDelayMaxHours": 2.0,
+                "minHoursPerDay": 99.9,
+                "minHoursPerLeg": 1,
+                "flightRuleId": 2,
+                "contractTypeId": 17,
+                "invoiceCreditTypeId": 0,
+                "minLegTechStopAddlFee": 200,
+                "minLegWaiversUsed": 2,
+                "minLegWaiversAllotted": 4,
+                "minLegWaiversCarriedOver": 0,
+                "shareSize": 0.000,
+                "taxiTm": 0.2,
+                "warRiskPremium": null,
+                "warRiskFlag": false,
+                "peakDateListCd": 4,
+                "ppdOperationalRestrictions": true,
+                "ppdBillingRestrictions": true,
+                "ppdPreventFlights": false,
+                "commercial": true,
+                "euEtsParticipantFlag": true,
+                "cardSubTypeId": 9,
+                "contractEndDate": "2016-07-30T14:00:00Z",
+                "contractStartDate": "2016-06-30T14:00:00Z",
+                "contractStatusId": 1,
+                "flightRuleIdDomestic": 2,
+                "flightRuleIdIntl": 2,
+                "expEligibilityFlag": false,
+                "isPayfFet": false,
+                "isPayfEscalation": false,
+                "externalContractId": 55161,
+                "delayedStartFlag": true,
+                "delayedStartDuration": 18,
+                "splitPaymentFlag": false,
+                "extendedTermEnd": "2016-12-02T14:00:00Z",
+                "highUtilizationFlag": false,
+                "enablePrepaymentFlag": false,
+                "opportunityId": "006E000000D01SeIAJ",
+                "flightRuleIdOvrFlg": true,
+                "fuelcharge": [ {
+                    "fuelChargeDifferential": 0.01,
+                    "fuelChargePerHr": 4.20,
+                    "averageFuelPrice": 1.6000,
+                    "fuelChargePlusMinus": 0.00,
+                    "fetFlag":false
+                } ],
+                "contractPrepaidChargeInfo" : [ {
+                    "chargeTypeCode" : 1,
+                    "quantity" : 25,
+                    "rate" : 9048.72,
+                    "totalAmount" : 22622,
+                    "fet" : 2000.30,
+                    "changeLog" : null,
+                    "escalationFlag" : false
+                } ],
+                "contractCharge" : [ {
+                    "hourlyRateTypeId" : 3,
+                    "amt" : 800.20,
+                    "billingCycleTS" : "2015-07-01T14:00:00Z",
+                    "effectiveDate" :  "2015-07-01T14:00:00Z"
+                } ],
+                "prepaidChargeTotal" : [ {
+                    "blendedRate" : 7200.00,
+                    "chargeTypeCode" : 66,
+                    "totalTypeCode" : 1,
+                    "total" : 150000.00
+                } ]
+            }
+        ]
+   }
+

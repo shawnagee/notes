@@ -1,0 +1,87 @@
+Controller
+
+$scope.searchFuelTypes = function() {
+		FuelRateService.searchFuelTypes($scope.selectedMonth, $scope.selectedYear, $scope.selectedCompany)
+			.then(function (results) {  //promise fullfilled
+				if ($scope.selectedYear != date.getFullYear()) {
+					$scope.months = loadAllMonths;
+				} else {
+					$scope.months = intialLoadMonths;
+				}
+				if (results.length == 0) {
+					$scope.existingEntry = false;
+					$scope.searchResults = $scope.loadNewFuelTypesFromPrevMonth();
+				} else {
+					$scope.existingEntry = true;
+					if ($scope.selectedCompany == 'NJA') {
+						$scope.searchResultsNJA = results;
+					}
+					$scope.searchResults = results;
+				}
+			}).catch(function (error) {
+				growl.error('Loading Fuel Types.', {title: 'Error!'});
+			})
+        };
+
+	
+Service:
+	
+angular.module('fuelRate')
+    .service('FuelRateService', function(FuelTypes, $q) {
+
+    this.searchFuelTypes = function(selectedMonth, selectedYear, selectedCompany) {
+        var deferred = $q.defer();
+            FuelTypes.get({
+                    month: selectedMonth,
+                    year: selectedYear,
+                    company: selectedCompany
+                },function(results) {
+                    if (results.errors) {
+                        deferred.reject(results.errors);
+                    } else {
+                        deferred.resolve(results);
+                    }
+                },function(errors) {
+                    deferred.reject(errors);
+                });
+                return deferred.promise;
+            };
+
+    }
+);
+
+--------------------------------
+
+Controller:
+
+FuelRateService.updateFuelRates(parentList)
+                .then(function (results) {
+                    $scope.searchFuelTypes();
+                    $scope.acTypesRate();
+                    isFormChanged = false;
+                    deletedList = [];
+                    growl.success('Saved Successfully.', {title: 'Success!', ttl: 2000});
+                }).catch(function (response) {
+                    var status = response.status;
+                    var text = response.data.errors[0].description;
+                    if (status == 422) {
+                        growl.error(text,{title: 'Error!'});
+                    } else {
+                        growl.error('Save failed!',{title: 'Error!'});
+                    }
+                });
+           
+
+Service: 
+
+this.updateFuelRates = function (parentList) {
+            var deferred = $q.defer();
+            FuelTypes.update(JSON.stringify(parentList)
+                ,function(results) {
+                    deferred.resolve(results);
+                },function(errors) {
+                    deferred.reject(errors);
+                });
+            return deferred.promise;
+        };
+		

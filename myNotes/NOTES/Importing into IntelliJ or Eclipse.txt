@@ -1,0 +1,58 @@
+Pacific and OPAC into IntelliJ
+
+For Pacific:
+
+Import
+external model (not existing sources)  It will pull in dependencies in pom files this way.
+Eclipse project
+add PACIFIC_HOME that is currently blank
+Make sure JRE is 1.6.0._20 in Preferences>Java>Installed JRE
+mockito is in external-tools. For 3 error locations, Right click on them (pacific-server and 2 others), Properties, 
+            Java build path, add external jars/ (pacific-trunk/external-tools/mockito/mockito-all-1.9.5.jar)
+
+
+For OPAC:
+Import
+external model
+Maven project
+check - "Search for projects recursively"
+Open in new window.
+
+
+Pacific into Eclipse
+
+First make sure there is no .classpath or .project file in the root dir of Pacific
+ant -f build-artifacts.xml nohalt=true
+
+New project -> Yogi
+
+Import Pacific
+
+Import Opac
+
+
+
+Opac Into Eclipse
+
+mvn clean install
+mvn eclipse:eclipse  (This will fail, but that's fine)
+
+Import
+General>  Existing projects into workspace
+
+You should see all the project modules listed out.  This means it will import.
+You will need to import Pacific
+PACIFIC_HOME needs set.
+Make sure Preferences>Java>Build Path> JRE is 1.6.0_20.  Highlight and remove JRE 1.6.0_13
+
+
+
+AncillaryTT into IntelliJ
+
+You must include common-domain in the same dir as AncillaryTT project.  It must be named 'common-domain'
+Remove c:/Users/pmi/grails/ivy-cache
+Import AncillaryTT into IntelliJ
+Rebuild Project
+
+Build Pacific
+ant -f build-artifacts.xml -Dnohalt=true

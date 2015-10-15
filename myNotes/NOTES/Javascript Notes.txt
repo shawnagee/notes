@@ -1,0 +1,279 @@
+Javascript Notes
+
+Validation example:
+
+$(document).ready(function() {
+    renderMargins();
+
+	$("#addonLineForm").validate({
+		rules: {
+			<g:each in="${selectedProductList}" var="row" status="i"> 
+			'quantity[${i}]':{
+						required: true,
+						number: true,
+						min: 0
+	    	},
+			'cost[${i}]':{
+						required: true,
+						number: true,
+						min: 0
+	    	},
+			'hcpcPrice[${i}]':{
+						required: true,
+						number: true,
+						min: 0
+	    	},
+	    	 'outcome[${i}]': {
+						required: function() { return $("#payAsSubmitted[${i}]").attr("checked"); }
+			},
+			</g:each>
+
+
+document.getElementById("editDialog_address").value;
+
+
+
+Grails Controller:
+render(contentType: "text/json", text: [url: createLink(action: 'index')] as JSON)    - renders data to AJAX call
+
+in Javascript:
+   $.ajax({
+      url: $('#settings-update-form').data('url'),
+      data: {
+        editFirstName: $('#firstName').val(),
+        editLastName: $('#lastName').val(),
+        editEmail: $('#email').val(),
+        editPhone: $('#phone').val(),
+        editFax: $('#fax').val(),
+        editExt: $('#ext').val(),
+        editUserName: $('#userName').val()
+      },
+      success: function(data) {
+        if (data.errors) {
+          var message = "<ul class=\"error\">";
+          $.each(data.errors, function(index, value) {
+            message += "<li>" + value + "</li>";
+          });
+          message += "</ul>";
+          $('#errorMessage').html(message);
+        } else {
+            window.location = data.url;     - rerenders to action 'index' specified in Ajax data push
+        }
+      }
+    });
+
+
+
+Buttons:
+    <div class="settings" id="settings-page" data-url="${createLink(controller: 'settings', action: 'saveInfo')}">
+    <input type="button" value="Save" onclick="settings.save()"/>
+                   settings.save is javascript function that does document.createAircraftForm.submit();
+    }
+  OR
+    <g:actionSubmit action="saveAcctInfo" id="save-button" value="Old Save"></g:actionSubmit>
+  OR
+    <g:actionSubmit action="index" id="cancel-button" value="Cancel"></g:actionSubmit>
+Note- No params passed with actionSubmit however.
+Note- submitToRemote doesn't pass checkboxes well. Ends up being params.{checkboxName} = "on" instead of T/F, if params come over at all!
+
+
+Disable buttons:
+$('#createAcftSave').prop('disabled', 'disabled');  --disable 
+$('#createAcftSave').prop('disabled', false);      --enable
+
+G:link - by default is a link to current Controller,Action.
+If you want a link that simply calls a javascript function and nothing else, try this...
+<a href="#" onclick="javascriptFile.doSomething(); return false">Toggle</g:link>
+       Return false is important to suppress GOING somewhere, like a link does.
+Inspecting the element shows you if/where it goes.
+
+
+Jquery
+    function toggleExpand(link) {
+      $(link).parents('li').find('.company-branches').toggle('blind');
+    }
+
+when passed a link, it moves up the ancestory looking for the 'li' parent, then finds the div with class=company-branches, and 
+toggles it shown/hidden. 
+
+
+
+Tabs
+ <div id="tabs">
+        <ul>
+            <li><a href="#demo-info-tab">Demographic Information</a></li>
+            <li><a href="#security-tab">Security</a></li>
+        </ul>
+
+        <div id="demo-info-tab">
+            <g:render template="demographicForm"/>
+        </div>
+
+        <div id="security-tab">
+            <g:render template="security"/>
+        </div>
+
+
+G:Select
+     <g:select name="homeBranchId" from="${branches}" optionKey="id" optionValue="${{it.compName + '!'}}" value="${ifxUser.refContact.branch.id}">
+                                  ^from this list Objs  ^key         ^ display                            ^determines initial value
+If you specify and optionKey then be aware that you should use that same property in the value attribute in order to pre-select an item.
+
+G:Select
+<g:select id='releaseVersion' name="releaseVersion" noSelection="['0':'--Select--']" 
+from='${new Alarm().constraints.releaseVersion.inList}' 
+onchange="${remoteFunction(controller:'alarm', action:'updateComponentByRelease',params:'\'selectedValue=\' + this.value', update:'component')};
+${remoteFunction(controller:'alarm',action:'updateDiscriminatorByComponent', params:'\'selectedValue=\' + this.value',update:'subsystem')};"></g:select>
+
+
+
+Why isn't render(view) working?  Maybe the method is called from an ajax call and just the data variable is being passed back to the ajax call.
+
+$('#daysSinceInjury').html(Math.floor((new Date().getTime() - new Date($('#dateOfInjury').html()).getTime())/(86400000)));
+
+g:checkBox ... not g:checkbox lower case!
+
+Good page on working with Forms/HTML
+http://www.w3.org/TR/html401/interact/forms.html#submit-format
+
+
+Toggle Logic:
+    function toggleAdvancedSearch() {
+        if ($('#advancedSearch').is(':checked')) {
+            $('#branch').removeAttr('disabled').removeClass('disabled');
+            $('#adjuster').removeAttr('disabled').removeClass('disabled');
+      } else {
+            $('#branch').attr('disabled','disabled').addClass('disabled');
+            $('#adjuster').attr('disabled','disabled').addClass('disabled');
+      }
+          $('#searchContent').blur();
+    }
+
+Reload page:
+<input type="button" id="resetFilters" class="btn btn-primary" value="Reset Filters" onclick="location.reload();"/>
+which is same as...
+window.location.reload(false); 
+// If we needed to pull the document from
+//  the web-server again (such as where the document contents
+//  change dynamically) we would pass the argument as 'true'.
+Javascript window.location object can be used to:
+1) Get the current page address (URL).
+2) To redirect the browser to other page.
+3) To reload the same page.
+window -- The window object in java-script represents an open window in a browser.
+location -- The location object in java script holds information about the current URL.
+
+
+Sticky header and table sorter!
+http://mottie.github.io/tablesorter/docs/example-widget-css-sticky-header.html
+
+all options of select:
+var allOptions = $('#saleStatusSel option');
+
+Get all options of checkbox, and force selection of 3rd one, then disable it:
+    function determineOtherFieldsToShow(){
+        var ownershipStatusValue = $('#ownershipStatusSel option:selected').text();
+        if (ownershipStatusValue == 'Managed') {
+            $('#insuranceStatusDiv').show("fast");
+            var allOptions = $('#saleStatusSel option');
+            var noSalesOption = allOptions[3].value;
+            $('#saleStatusSel option[value='+noSalesOption+']').attr('selected', 'selected');
+            $('#saleStatusSel').prop('disabled', 'disabled');
+        } else {
+            $('#insuranceStatusDiv').hide("fast")
+            $('#salesStatusDiv').show("fast");
+            $('#saleStatusSel').prop('disabled', false);
+        };
+    }
+	
+	
+Date format of java Date from Domain:
+<p id="anticipatedDeliveryDtShow"><g:formatDate format="dd MMM yyyy" date="${aircraft.anticipatedDeliveryDate}"/></p>
+
+Draw a line with a label:
+<div style="display: inline-block; position: relative; top: -10px; background-color: #000000; padding: 0px 10px;text-align: center">Optional Details</div>
+
+
+Render template 2 different ways on page load:
+    <g:if test="${aircraftEdit}">
+        <div id="modelAndMfgEditDiv">
+            <g:render template="modelAndMfgTemplate" model="['legalModelNameTxt': aircraft.legalModelName, 'manufacturerTxt': aircraft.legalManufacturerName, 'numberOfEngines': acType.numberOfEngines]"></g:render>
+        </div>
+    </g:if>
+    <g:else>
+        <div id="modelAndMfgCreateDiv">
+            <g:render template="modelAndMfgTemplate"></g:render>
+        </div>
+    </g:else>
+
+_modelAndMfgTemplate.gsp	
+	<div id="modelAndMfgTemplate">
+    <div class="col-xs-6 col-sm-3">
+        <label class="control-label" for="legalModelNameLbl"><b>Legal Model Name:</b></label>
+
+        <div class="form-group">
+            <g:textField name="legalModelNameTxt" id="legalModelNameTxt" value="${legalModelNameTxt}" size="20"/>
+        </div>
+    </div>
+
+    <div class="col-xs-6 col-sm-3">
+        <label class="control-label" for="manufacturerLbl"><b>Manufacturer:</b></label>
+
+        <div class="form-group">
+            <g:textField name="manufacturerTxt" id="manufacturerTxt" value="${manufacturerTxt}" size="20"/>
+        </div>
+    </div>
+    <g:hiddenField name="numberOfEngines"  id="numberOfEngines"  value="${numberOfEngines}" />
+</div>
+
+    def getAcTypeInfo() {
+        try{
+            def acType = aircraftTypeService.getACType(params.acTypeId.toLong())
+            render(template: 'modelAndMfgTemplate', model:[legalModelNameTxt: acType.legalModelName, manufacturerTxt: acType.legalManufacturerName, numberOfEngines: acType.numberOfEngines])
+        }catch(Exception e)  {
+            log.error("Got error in getAcTypeInfo()",e)
+        }
+    }
+
+    def getAcTypeInfoFromAircraft() {
+        try{
+            def aircraft = aircraftInventoryService.getAisAircraft(params.aircraftId.toLong())
+            def acType = aircraftTypeService.getACType(aircraft.aircraftType.id)
+            render(template: 'modelAndMfgTemplate', model:[legalModelNameTxt: aircraft.legalModelName, manufacturerTxt: aircraft.legalManufacturerName, numberOfEngines: acType.numberOfEngines])
+        }catch(Exception e)  {
+            log.error("Got error in getAcTypeInfo()",e)
+        }
+    }
+
+
+Close X:
+<a href="#" class="close" data-dismiss="alert">&times;</a>
+
+When Undefined:
+if(typeof $('#inventoryOnly').val() == 'undefined'){
+	inventoryOnly = 'null';
+}else{
+	inventoryOnly =  $('#inventoryOnly').is(':checked');
+}
+
+
+Drop down explained
+http://www.undefinednull.com/2014/08/11/a-brief-walk-through-of-the-ng-options-in-angularjs/
+
+$scope.items = [{name:'one', age: 30}, {name:'two', age: 27}, {name: 'three', age: 40}]
+ng-options="item.age as item.name for item in items"
+      add to model^        ^shown
+
+Here each option will have the text as item.name but when we select one of them, the selectedItem will be item.age
+
+
+Return to act as Submit:
+				<div class="input-group col-md-10">
+                                    <div class="input-group-addon"><i class="fa fa-search"></i></div>
+                                    <input type="text" class="form-control" name="searchStringTxt" id="searchStringTxt"
+                                           ng-model="searchStringModel" placeholder="Search"
+                                           ui-keypress="{13:'executeCSASearch()'}" ng-minlength="2" ng-cloak>
+                                </div>
+
+Hover over: (easily done with "TITLE")
+<span title="${account.individuals[1]}"><g:if test="${account.individuals.size > 1}">...</g:if></span>

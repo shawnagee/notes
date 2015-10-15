@@ -1,0 +1,3590 @@
+PBA Line Item Editor - add company name to address for transportation items.
+
+Invoice# 11561003
+
+Mar.5 - May 5  Auth
+Created Mar. 7  735054 ref detail id
+
+
+
+check HES document responses daily - for 2 weeks
+create incident to rm 2 weeks of files
+create incident to not create index.xml if no attachments for the day
+/home/mrobbins/shawn - All Feb 24 resend files
+problem files were 2-13 EMPTY
+					2-24 seven docs still need attached by Andria.
+					
+					
+/home/share/healthesystems/test/eligibility/
+
+
+CL#WC949-A08817
+REF#201112270004
+HES REF#421141
+ID#680633
+
+WC116-233294
+
+Copy Trip
+WC555-896772
+Referral 82702
+Original child appointment 745636  already dispensed Y  dispensed outcome 258
+Parent  741287   partnerCreateDate Mar-12-2012
+new copied trip 750863  (after parent)
+new copied trip 750864  (before parent)
+
+YOGI
+IFXActionManager
+	createAction
+	
+	store strategy restriction in AOPD table (column: strategy_restriction_desc)
+	saveAction - uses IFXInterface to saveAction(item, patient#, incident#)
+	IFXInterface also has a createAopdForAction.... which will need added to.
+	
+	
+	IFXActionHistoryFrame
+			createButtonPanelForSummary - action listener on "Submit Checked Actions" button
+				saveItems
+					saveAction(IFXInterface) - Will also save AOPD if Medication Alert
+					
+					pmi_status 1
+					elig_type 1
+	PharmWizardModel
+		createURItem
+	
+		IFXActionHistoryItem - has URRxInfo, which contains GPI
+	IFXActionManager
+		createAction - when wizard isFinished, 'items' is added to frame
+						model.getFinishedItem is connection to PharmWizardModel
+			
+	"Submit checked items"
+	
+	ifxItems is a Drug obj when Medication Alert/Prior Auth Req.
+	
+WC555-A50409	
+	-----------------------------------------------------------------------
+RejectServiceDelegate - uses P3 guidelines service.
+
+ESIS claim 67914941132879
+nabumetone 750mg
+GPI 66100055000330
+NDC: 591367101
+
+inserts:   aopdId 2102403   actionRecId 
+ActionRecId 17254961 inserted into Action Hist table
+
+LineItemSelectionPanel, getSelectedRxbIds gets...
+LineItemData  
+	RxbRecId - comes from rxb_recId on Line Item
+IFXInterface.getPharmacyItems -only place that sets RxbRecId on the LineItemData
+
+-----------------------------------------------------
+Vendor Selection pulling Active/Inactive vendors too
+
+ReferralDetailVendorSelectionForm
+'0217400000064752' deactivated by Mollie in QA
+
+-----------------------------------------------------------
+Referral mgmt screen refresh problem
+
+WC205-079134
+new referral  98939 - dev
+new referral  98940 - dev
+437422 -QA TRP, with no parents
+my QA referral 62857
+----------------------------------------------------------
+Creating Domain Classes
+-run createPmiDomain by grails -Dgrails.env=test run-script src/groovy/createPmiDomain.groovy
+add version false
+add def dataSource
+if id is xxx# no need to map to xxxNumber.
+add table to mapping (if name differs)
+add to SVN
+create ID, sequence
+Unit tests - get constraint tests from output file.  mockDomainIfApplicable.
+create Maker
+Maker needs to initialize it's parent relationship Makers.
+create integration test, if needed.
+InspectAllDomainTests should pass.
+
+If error "no such property: eventListener for class: GrailsEvents_Groovy... remove your target directory. You probably ran it under the wrong grails version.
+
+learn about classes at runtime - Reflection API
+
+When an object belongsTo another, in the mapping connect the belongsTo obj to the key in this table. The keys become whole objects.
+class ActionReasonXref implements Serializable {
+
+    static belongsTo = [action: Action, reason: ActionReason]
+
+    String instructions
+    Long actionObjType
+    Long active
+
+    static mapping = {
+        id composite: ['action', 'reason']
+        action column: 'ACTION#'
+    	reason column: 'REASON#'
+        version false
+    }
+
+
+Usage::::::select * from ActionObjectPharmacyData where restat.id 
+
+
+
+Restat             ActionHist
+   |                |
+  ActionObjectPharmacyData
+  
+
+ActionObjectPharmacyData
+	hasMany actionObjectRejectCode
+	mapping: (no mapping for hasMany obj)
+  
+ActionObjectRejectCode
+	belongsTo actionObjectPharmacyData
+	mapping:  actionObjectPharmacyData column: 'AOPD_ID' - which is in this table, (but not listed)
+	
+
+Patient
+	hasOne Incident
+	mapping: (no mapping for hasOne obj)
+	
+Incident
+		belongsTo Patient
+		patient column: 'PATIENT#' - which is in Incident, (but not listed)
+	
+	Maker for Incident will make patient  (params.patient)
+
+Class
+	hasMany X
+	no mapping for X
+Class
+	belongs to Y
+	map Y to column (e.application(column: 'app_id')
+
+class ApplicationConfig {
+    static hasMany = [applicationConfigDetails: ApplicationConfigDetail]
+
+    static belongsTo = [application: Application ]
+    
+    String name 
+    String appConfigDescr
+
+    static mapping = {
+        table('application_config')
+        id(column: 'app_config_id', generator: 'sequence', params: [sequence: 'seq_application_config_id'])
+        application(column: 'app_id')
+        version false
+    }
+class Application {
+    static hasMany = [applicationConfigs: ApplicationConfig]
+
+    String appName
+    String appDescr
+
+    static mapping = {
+        table('application')
+        id(column: 'app_id', generator: 'sequence', params: [sequence: 'seq_application_id'])
+        version false
+    }
+	
+----------------------------------------------------
+WC324-731519
+Order - Invoice History - Referral History button throws error
+ReferralManagementForm constructor calls initializeData, which gets eligibilityFeedData from claim# (findLastEligibility)
+ReferralManagementForm only seems to be called from ViewReferralListAction.  Why is claim# missing here?
+
+InvoicePayAction - PROP_PATIENT_NUMER is set, why not PROP_PMI_CLAIM_NUMBER
+ViewReferralListAction - claim# null on create of ReferralmanagementForm obj.
+----------------------------------------------------------
+AutoComplete process
+Billing/batchJob/autocompleteInvoices 
+BatchJobController/processInvoices
+	get eligible prebilling audit items  (only 1 record, invoice 11980271 for Howard Tharp)
+	attempt to autocomplete by...
+		find matching invoice. Take hcpc of inv to autocomplete, find OrderInvoices 
+		stop if E1399 or K0108 hcpc!
+		stop if invoice should not be used to autocomplete from (ie. has dup hcpcs w/inconsistent pointers)
+--------------------------------------------------------------
+MonthlyInvoiceService
+InvoiceJobController
+RentalInvoiceJobService - called by InvoiceJobController.findrentalInvoicesForProcessing
+OrderLineItem - getActiveRentalPeriod
+
+----------------------------------
+pmionbasetest.pmi.corp
+Retrieving Onbase docs
+	OnbaseDocument
+	OnbaseDocumentService.findOnbaseDocumentsForPatient
+	WsReferralDocumentServiceAdapter  - calls getReferralDocumentService().findOnbaseDocumentsForPatient(patientNumber);
+	OnbaseDocumentService  - PROD or DEV
+	ReferralDocumentWebService
+	OnbaseDocumentServiceBean - impl of OnbaseDocumentService
+	
+	look for uses of OpacApplication.getConfigValue   such as PartnerHesReferralClientServiceBean.getHESReferralUrl
+	
+WC413-A00105
+-------------------------------------------
+
+isTopMostLevel = original Action, and not reaction
+this.createAopdForAction - creates AOPDs for already invoiced items.(by nature of query)
+
+Qty 24
+Cost 23
+
+Restriction can have ONLY an INS_COMPANY_NUMBER or a STRATEGY_ID, not both.
+
+insert into PINPOINT_PRO.restriction (RESTRICTION_ID, INS_COMPANY_NUMBER, STRATEGY_ID, ACTION_NUMBER, REASON_NUMBER, TYPE, VALUE, LABEL)
+values (SEQ_RESTRICTION.nextVal, 824, null, 6, 24, 'QUANTITY', 30, 'QUANTITY OVER LIMIT(${value})');
+
+p3serviceGuidelineRootUrl = "http://teamdev1:7780/p3services/guideline/list.xml?"
+IFXInterface - P3ServiceGuidelines.getInstance().getStrategyRestriction
+------------------------------------------------------------
+GuidelineController - findGuidelines and findRestrictions
+RestrictionSearchService
+
+Guideline - getExternalDescriptionDisplay  example of Gstring.  pass (label, restriction.properties)
+still working GuidelineControllerIntTests to make sure XML contains right label
+RestrictionSearchServiceTests - test find restrictions for Strategy
+		
+localhost:8080/p3services/guideline/list.xml?strategy=A-MNBUMUS&gpi=49270040006510&dateOfService=03/14/2012&insCompanyNumber=824&brand=Y&cost=500&quantity=5000&actionNumber=5&reasonNumber=12
+localhost:8080/p3services/guideline/list.xml?strategy=L-PAGM&gpi=49270040006510&dateOfService=03/14/2012&insCompanyNumber=111&brand=N&cost=500&quantity=50&actionNumber=5&reasonNumber=12&daysSupply=4
+localhost:8080/p3services/guideline/list.xml?strategy=L-PAGM&gpi=49270040006510&dateOfService=03/14/2012&insCompanyNumber=543&brand=Y&cost=110.0&quantity=50&actionNumber=5&reasonNumber=12&daysSupply=4
+Matt's test that's not returning Cost
+
+localhost:8080/p3services/guideline/list.xml?daysSupply=888&dateOfService=05%2F29%2F2012&reasonNumber=13&insCompanyNumber=543&gpi=65100020102050&actionNumber=6&brand=Y&strategy=H-CPGM&quantity=888&cost=8880.0
+localhost:8080/p3services/guideline/list.xml?daysSupply=999&dateOfService=05%2F29%2F2012&reasonNumber=13&insCompanyNumber=543&gpi=65100020102050&actionNumber=6&brand=Y&strategy=H-CPGM&quantity=999&cost=9990.0
+
+
+PA Required		7, 10
+Quantity		6, 24
+Cost			5, 9
+Days Supply		6, 24
+
+update pinpoint_pro.attribute a
+set a.pa_required_flag = 'Y'
+where a.attribute_type = 'description'
+and (a.default_external_descr like '%rior auth%'
+  or a.default_external_descr like '%Step therapy applies%')
+and a.descr not like 'Excluded%';
+
+----------------------------------------------------------------------------------
+PharmWizardModel
+	checkMEAOptionForDrugTransferPanel
+IFXInterface
+	shouldShowMorphineEquivalencyOptions
+
+
+WC80D-002841     pat#4400
+WC197-738789  - TingTing test
+
+ cat Restriction_DCR_Test_insCompany.csv | cut -d',' -f1-5 | awk '{print "insert..." $1 $2}'
+Testing
+Company 943, added restriction of Qty 20
+ --claim# 228440618-01   first showed, then after rule should not
+
+PracitionerDetailFactory
+PendingItemFactoryService
+PendingItemDetail
+
+GPI 60204080100420   cost 6.24
+
+select * from PMI.elig_exception;
+select * from PMI.action_hist;
+select * from PMI.exception_created;
+
+select c.claim#, p.patient#, p.pmi_member_id, company.comp_name, a.descr as action_name, r.descr as reason_name, reaction.descr as reaction_name, aopd.gpi,
+     aopd.strategy, aopd.est_cost, aopd.days_supply, aopd.quantity,
+     exc.cost_override, exc.days_supply_override, exc.quantity_override, exc.drug_override, exc.physician_override, exc.max_cost, exc.dur_override
+  from PMI.patient p
+inner join PMI.claim# c
+ on c.patient# = p.patient#
+inner join pmi.action_hist ah
+ on ah.patient# = p.patient#
+inner join PMI.exception_created ec
+ on ec.action_recid = ah.action_recid
+inner join PMI.elig_exception exc
+ on exc.recid = ec.exception_recid
+inner join PMI.action a
+ on a.action# = ah.action#
+inner join PMI.action_reason r 
+ on r.reason# = ah.reason#
+inner join pmi.reaction_hist reh
+ on reh.action_recid = ah.action_recid
+inner join pmi.action reaction
+ on reaction.action# = reh.reaction#
+inner join PMI.action_object_pharmacy_data aopd
+ on aopd.action_recid = ah.action_recid
+inner join PMI.ins_branch branch
+ on branch.branch# = c.branch#
+inner join PMI.ins_company company
+ on company.ins_comp# = branch.ins_comp#
+where p.patient# in ('9802599'); 
+
+
+GPI of Prescriber alert - 65100055107445
+
+AdjusterServiceBean - getPendingItemDetailIgnoreResolved
+PendingItemDetailDAO - getPendingItemDetail & getPendingItemDetailIgnoreResolved
+	PendingItemDetailFactory - create
+	ClaimDAO - getClaimDetail
+		ClaimDetailFactory - create
+			PendingItemSummaryDAO - getPendingItemsForIncident
+			
+Healthe Extend form issue
+ReferralDetailExtendAction -calculateEndDate
+ReferralDetailExtendForm - setAuthEndDateBounds.  For HH, setLowerBounds to extendData.getAuthstartDate instead of AuthEndDate
+
+PendingItemDetailDAO - getPendingItemDetailIgnoreResolved(isPMIUser)
+User.java  - isPMIUser
+
+locks and latches 
+1) define locks in Manage Jenkins -> Configure System -> Locks (in my case I used the name of the shared database); 
+2) set relevant jobs to use the locks: Configure -> Build Environment -> Locks
+
+
+web_user_claims  - briefcase
+
+Z:\IS\Staff\Projects\CURRENT\7681 - IFX Refresh\Pre-Project Planning and Analysis\   - IFX mock up screens
+
+---Perl---
+Create Prior Auth
+vendor restrictions
+loop thru vendors
+ ignore re-escalations
+ make sure Patient exists
+ if service = 4, print auth_types and end
+ get current Elig for patient, then loop thru elig records
+  if action=5
+   get gpi from aopd record
+   get dea
+  else (action != 5)
+   get gpi from aopd record
+   if reason != 10031(URR), fill GPI with * to fill to 14
+  get auth types using reaction
+  set max fills #
+  if action=6, reason=10031(URR), override many variables
+  calculate termination date off auth
+  insert exception??
+  
+restat retrictions
+get reactions to process
+get predictive actions
+  insert_schedule
+  
+  get_predictive_actions_to_process - calls calc_hash_based_on_patient_gpi_reaction.  Change this hash to correct combining of call pharm schedules?
+                                      returns $action_reactions_arr[$j]->{is_predictive_action} = "True";
+restat reactions
+  
+Create schedules for action = '6(Medication Alert)'
+
+
+Exception Created
+ActionHist
+17443439 5/12
+17443440 6/24
+17443441 6/23
+17443438 59/90
+
+Elig Exceptions
+6569405 - Prescriber Alert              for 17443439
+6569404 - drug info                     for 17443440 & 17443441
+
+3453 - IFX 8.3.2 Rules
+
+---------------in times------------
+7:00 Slenker
+7:10 3 girls, TT
+7:30 Milligan
+7:45 Chiz
+8:00 Mollie
+
+----- IFX9 Medication section of Reponse screen
+patricia.olow@libertymutual.com  - good example in IFX9 to respond to Med Alert
+pw: patricia.1234
+
+--IFX8
+PendingItemDetail   - drugStrategy
+take drug strategy, hit P3 to get restrictions
+display drugStrategy, restrictions, BP/NOI, paycode, 
+then update AOPD with this info.
+
+ResponseSession
+	initItem - calls getPendingItemDetailIgnoreResolved
+	item is then new ItemWrapper for the screen
+PendingItemDetailFactory
+    create - creates PendingItemDetail, calls P3
+	     PendingItemDetail includes drugStrategy, BP/NOI, paycode, RejectInformation(strat restriction, potential rejects)
+_pendingItemRespond.gsp
+--IFX9 
+claimSummaryTemplate.gsp  'Respond' calls controller="claim"
+ClaimController
+	getPendingItemScreen   renders pendingItemRespond.gsp
+	
+	ClaimController
+			index calls claimService.getClaimDetail
+						calls factoryService.createClaimDetail
+								calls ClaimFactoryService createDetail, calls getPendingItems- foreach actionHist factoryService.createPendingItemDetail
+	
+	ClaimController
+			getPendingItemScreen  calls pendingItemService.getPendingItemDetail
+	PendingItemService
+			getPendingItemDetail calls factoryService.createPendingItemDetail(actionHist)
+	FactoryService
+			createPendingItemDetail
+	PendingItemFactoryService
+			createDetail(actionHist) and createDetail(actionHist, loadRetrictions)
+			
+parseRejectInfo
+	root-guideline
+	potentialRejects-"potentialReject"(made up of action,reason,etc.
+	loop thru potentialRejects.  -> 1 potentialRejectElement
+	parsePotentialReject(1 potentialRejectElement)
+		actionNumber = elementTextTrim(potentialRejectElement, "actionNumber")
+		               elementTextTrim(  ^ element,             ^ elementName)
+					          textTrim(element(element?, elementName));
+						
+						<guidelines>
+							<guideline>
+                               <description>
+                                  <external>
+								      strategy restriction text
+							      </external>
+								</description>
+						    </guidelines>
+							<potentialReject>
+								<actionNumber>5 <\actionNumber>
+							    <reason>....
+							</potentialReject>
+
+http://p3qa:8080/p3services/guideline/list.xml?strategy=H-CPGM&gpi=33100010000310&dateOfService=04/09/2012&insCompanyNumber=543
+http://p3prod:8080/p3services/guideline/list.xml??strategy=H-CPGM&gpi=33100010000310&dateOfService=04/09/2012&insCompanyNumber=543
+
+http://teamdev1:7780/p3services/guideline/list.xml?insCompanyNumber=543&actionNumber=5&reasonNumber=12&gpi=65123456789011&strategy=H-CPGM&dateOfService=04/09/2012&quantity=600&daysSupply=400
+
+Doesn't work:
+http://teamdev1:7780/p3services/guideline/list.xml?insCompanyNumber=543&actionNumber=5&reasonNumber=12&gpi=33100010000310&strategy=H-CPGM&dateOfService=4/9/12&quantity=600&daysSupply=400&cost=500.0&brand=Y
+pendingItemDetail, drugStrategy
+    when creating pendingItemDetail, it populates drugStategy from actionHist-AOPD.strategy.getDrugStrategyCode
+     
+WC205-522625
+patient# = '9812855'
+
+model.reference.R_IFXManual.manual_base_url=/ifx/resources/pdf/manual
+http://ifxtraining.progressive-medical.com/ifx/resources/pdf/medplans/L-MUSSKL_medplan.pdf  -IFX8
+/home/devuser/ifx/resources(/pdf/manual)
+http://localhost:8080/ifx/resources/pdf/manual/H-WOUND_medplan.pdf   -IFX9
+file:///C:/projects/ifx9/resources/pdf/manual/H-WOUND_medplan.pdf
+Docs are in SVN:  /ifx/misc/static_files/pdf/medplans
+teamdev1 location:(login devuser)  /home/devuser/ifx/resources/pdf/manual
+
+In prod - then ENTIRE path is /ifx/resources/pdf/manual.  This is from the root.  On Teamdev1, after a refresh you lose '/home/devuser/glassfish/ifx9/ifx/resouces' 
+      and it becomes '/ifx/resources'.
+
+<a href="${createLink(url: "${pendingItemDetail.url}")}">${pendingItemDetail.drugStrategy}</a>
+<img src="/resources/img/16x16/pdf.gif" ${createLink(url: "${pendingItemDetail.url}")}">${pendingItemDetail.drugStrategy}</>
+
+http://localhost:8080/ifx-web/resources/img/16x16/pdf.gif
+   
+---------Injury Phase------
+Routing rules will now be split for B2B into Acute/LT, for when to route to URR
+Injury Phase not directly attributed to first letter of strategy.  P3 needs to incorporate this into rule lookup.
+There is an initial phase.  If nothing found, cus only for Minnesota, go right to acute vs LT.
+P3 will need to call Rayburn's rules to determine company's #of days to LT.  (default 90) Compare this # to Incident.injury_date, and return correct Routing rule.
+Note - Rule engine package PL/SQL block only takes 17 params?  Add 1.
+Lastly - Cache results, TTL based
+
+RuleLookupCache is defined in resources.groovy of top level project.
+
+ClaimService - determineInjuryPhase
+ifxActionsController
+ifxActionsService
+RuleService
+IfxServicesGrailsPlugin.groovy - ehcache defined here at runtime.
+
+ifx-web-services/IfxActionsService.determineContact
+				getRoutingRule(claimDetail, action, reason)
+				found rule passed into getContacts.  add - compare of injuryDate to see if Acute/LT.  Pass Acute/LT to params.
+			
+	
+Each IFX_ROUTING_RULE is made up of multiple records.(BRANCH,COMPANY,STATE,EMPLOYER)
+
+Cache in effect when calling getRule
+What part of RuleLookupDetails is key, which is value for cache?
+encodeasMd5 hash
+Hibernate Level 2 caching, because level 1 is life of the session
+When we have access to the ApplicationContext we could for example load resources or get references to beans in the context.
+doWithSpring configures objects at runtime 
+
+When cache needs rebuilt in teamdev1 - wipe out all workspaces in Jenkins and rerun the job
+
+rule lookup
+20565  LT       60
+20565  acute    30
+20565 initial   8
+
+rule lookup detail
+20565  company number 543
+
+
+----routing rules
+
+14460 Expanded  UR        GPI           12312312312 eq
+14460 Expanded            InjuryPhase   ACUTE       eq
+
+14460 Expanded  UR        GPI           41542345234 eq
+14460 Expanded            InjuryPhase   LT          eq
+
+
+Need to Google 'remote desktop connection with anyconnect vpn'
+---------- Sort PendingItems --------
+Sort by first PendingItem in each Claim.
+SearchService dynamic whereClause will need to sort by PendingItems actionDate.
+Pagination in screen prohibits sorting in JavaScript. We don't have all the Claims at once.
+
+DashboardController - call searchService with settings params
+SearchService - getClaimSummariesAssignedToUser will call search with NEW param setting.pendingItemSortOrder
+
+ClaimSummary
+	PendingItemSummary, actionDate
+
+<g:select name="sortOrder" from="${['Old To New','New To Old']}" value="${sortOrder}" onchange="return changeSortOrder()"/>
+
+SearchController
+	index renders 'search.gsp'
+	renderSearchResults renders template searchResults.gsp
+
+search.gsp - Main page
+	remoteLink 'My Claims'
+	ifx:box for Claims List
+	    <div id="pending-items-screen">
+		</div>
+	
+_searchResults.gsp (template)
+      render template=claimSummaryTemplate
+	  ifx:pagination
+	  
+	  ---------------
+DashboardController
+	index renders 'index.gsp'
+	sortClaims renders template _searchResults.gsp
+	
+index.gsp - Main page
+	ifx:box for My Pending Items
+		<div id="pending-items-screen">
+        </div>
+
+claimsList.gsp (template)
+	render template claimSummaryTemplate
+
+
+Brian added, but I overrode...
+      <ifx:box title="My Pending Items (${claimSummaries.pendingItemSummaries*.size().sum() ?: 0} pending items)" id="pending-items" padding="false">
+        <g:render template="/templates/claimSummaryList" model="[claimSummaries: claimSummaries]"/>
+
+			
+<ifx:box sortOption="${ifx.toggleSortOrder(currentSortOrder:currentSortOrder,update:"pending-item-screen",title:"My Pending Items (${claimSummaries.pendingItemSummaries*.size().sum() ?: 0} pending items) ")}" id="pending-items" padding="false">
+ <ifx:box title="${title}" actions="${ifx.sortButton(currentSortOrder:currentSortOrder,update:"pending-items-screen")}" id="pending-items" padding="false">	
+<ifx:box title="${'<span id="pending-items-title">Claims List</span>'} ${'<span id="search-result-total"></span>'}" id="pending-items" padding="false">
+title: "${'<span id="pending-items-title">' + title + '</span> Total: <span id="search-result-total">' + total + '</span>, Page:' + page}"
+			
+------Drug strategy description incident -----
+PendingItemFactoryService.getDrugStrategy method needs to check P3 table first for strategy code, before resorting to patientService.getCurrentRestat Elig
+    for drugStrategyDescription?.description
+Test claim - Sheryl Black
+
+Changes made to PendingItemFactoryService and DrugStrategyCode
+
+---------Defect 2 claims disappear when you click off Only Open pending items-----
+SearchService
+Pat Olow was selected as the adjuster.  So query dynamically created: and Open_flag='Y' and refContact=Pat Olow.
+Turns out for the 2 claims (like WC860-087863) had most of the Open_flag = 'N' in this date range.
+For the two claims with open_flag = 'Y', it wasn't assigned to Pat Olow.
+
+--------Brian Tower appearing twice in Adjuster list----------
+SecurityService.getAdjustersForBranch
+There are 2 different adjusters named 'Brian Tower' associated w/claim.
+select * from PMI.ifx_user iu
+where iu.contact_number in (55820, 76588);
+select * from PMI.ref_contact rc
+where rc.last_name = 'Tower';
+select * from PMI.ifx_user_company iuc
+where iuc.ifx_user_id in (77989, 77990)
+
+http://www.css3.info/preview/rounded-border/        -Rounded corners
+
+--------- Settings --------------
+SettingsController
+	index
+		settingsAcctTemplate
+		settingsOOOTemplate
+	edit
+		settingsAcctTemplate
+		editSettingsTemplate *
+
+SettingsService
+
+<g:form action="saveAcctInfo">
+<input type="submit" value="Save" id="submit">
+
+<g:form name="editAcctInfoForm">
+<g:actionSubmit action="saveAcctInfo" id="save-button" value="Save"></g:actionSubmit>
+
+old tnsnames
+PMI_DEV =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = oracledev.pmi.corp)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = pmi_dev.pmi.corp)
+    )
+  )
+----------------------------AJAX AJAX AJAX AJAX --------------------------
+_physicianSelctor.gsp includes javascript below.
+<div id="search-physicians" data-url="${createLink(controller: 'util', action: 'searchPractitioners')}">
+<input type="button" value="Search" onclick="physicianSelector.search()"/>
+
+physicianSelector.js
+    my.search = function()  ajax call to #search-physicians
+	
+UtilController
+    def searchPractitioners(PractitionerSearchCommand command) {
+
+        if (command.hasErrors()) {
+            render(contentType: "text/json", text: [errors: command.errors.allErrors.collect { message(error: it, encodeAs: 'HTML')}] as JSON)
+            return
+        }
+
+        def results = practitionerService.search(command)
+        render(contentType: "text/html", template: "/templates/physicianSelector/physicianSelectorResults", model: [practitioners: results])
+    }
+		
+-------------- Settings OOO forwarding------------
+IFX8 Home.java getVacDateFromStr
+H_OooForwarding.xhtml
+
+_claimSummaryList.gsp - performs autoComplete on reassignTo
+
+I need User to have branch and company, so that I can use this to lookup valid RefContacts that are in IfxUserCompany and IFXUserBranch.
+settingsOOOTemplate calls autoCompleteContactsForOOOForwarding
+UtilController currently looks for all OH RefContacts, but will need to change to pull only for that branch, company.
+SecurityService.autoCompleteContactsForOOOForwarding
+
+Validation model IfxDirectMedicalEquipmentCommand
+
+DateFormat formatter = new SimpleDateFormat("MM/dd/yyyy")
+ifxUser.forwardingEnd = (Date)formatter.parse(command.sendOOOEnd)
+
+SearchService.getQuery
+	Pat Olow has her rights, and the forwarding person has his rights.  Forwarding only allows forwarding person to see their claims.
+	
+	
+-----------------Settings Change password -----------------------------	
+jesse.villarreal@tasb.org/Password.22   - for testing password changes
+$2a$10$uvoEUsd0gyRnRvNqhdioNO0Z1i9/FpzCCfn/CzCjbwExNn.rTUB/e
+findAllByUserAndDateCreated
+
+-------------------Settings Show Company/Branches ------------------
+SecurityService.getBranchesForUser and .getCompaniesForUser
+jquery expand list 
+accordian
+manual open/close in javascript  http://www.karlnelson.net/nestedlists/
+show/hide javascript  http://www.alohatechsupport.net/webdesignmaui/maui-web-site-design/show_hide_expand_collapse_javascript.html
+<script type="text/javascript">
+    function toggleExpand(link) {
+      $(link).parents('li').find('.company-branches').slideToggle('fast');
+      $(link).parents('li').toggleClass('company-list-expanded company-list-collapsed');
+    }
+  </script>
+
+      <ifx:box title="Companies and Branches" id="settings-companies-and-branches">
+        <div id="settings-co-and-br-window" class="company-branch-list">
+          <ul>
+              <g:each in="${companiesAndBranches}" var="companyBranch">
+                <li class="company-branch-list-collapsed">
+                  <h3><a onclick="toggleExpand($(this))">${companyBranch.key}</a></h3>
+                  <div class="company-branches hidden">
+                    <ul>
+                    <g:each in="${companyBranch.value}" var="branches">
+                      <li>${branches.branchName}<br/></li>
+                    </g:each>
+                    </ul>
+                  </div>
+                </li>
+              </g:each>
+          </ul>
+        </div>
+      </ifx:box>
+
+-------------- Show in Briefcase checkbox ---------------
+ The following can't pass checked value as param to remoteFunction 
+  <div class="claim-header-action">
+    <g:checkBox name="showInBriefcase" id="showInBriefcase" onclick="${remoteFunction(action: 'toggleAddToBriefcase', params: [claimId: claimDetail.id, toggle: $() ])}" checked="${showInBriefCase? true : false}"/><label for="showInBriefcase">Show in briefcase</label>
+  </div>
+  
+---------------- Send email for forwarding ---------------------------
+EmailService and ClaimController.emailNurseOrPharmacist
+
+--------------Sort Option Asc,Desc,Alpha -------------------------
+    def sortButton = { attrs, body ->
+        def remoteParams = [controller: controllerName, action: actionName]
+        def sortClass
+
+        if (attrs.update) {
+            remoteParams.update = attrs.update
+        }
+
+        out << """<div class=\"sort-option\">
+                   <select name=\"sortOrder\" value="${attrs.currentSortOrder}" onchange=\"${remoteFunction(action: remoteParams.actionName, params: '\'sortOrder=\' + this.value', update: "${remoteParams.update}", onSuccess: "setSortOrder(attrs.currentSortOrder);")}\">
+                    <option value='d'>New to Old</option>
+                    <option value='a'>Old to New</option>
+                    <option value='n'>Alpha</option>
+                   </select></div>"""
+//        out << remoteLink(remoteParams +  [params: params + [sortOrder: attrs.currentSortOrder]]) { "<div class=\"${sortClass}\"></div>"  }
+    }
+	
+	        def rfParams = '\'' + params.collect {name, value -> name + "=" + value }.join('&') + '&sortOrder=\' + this.value'
+
+        out << """<div class=\"sort-option\">
+                   <select name=\"sortOrder\" id="sortOrder" onchange=\"${remoteFunction(action: remoteParams.action, params: rfParams, update: "${attrs.update}")}\">
+                    <option value="d" ${attrs.currentSortOrder == "d" ? "selected='selected'" : ""}>New to Old</option>
+                    <option value="a" ${attrs.currentSortOrder == "a" ? "selected='selected'" : ""}>Old to New</option>
+                    <option value="n" ${attrs.currentSortOrder == "n" ? "selected='selected'" : ""}>Alpha</option>
+                   </select></div>"""
+
+-------------Incident VendorLocationService.wsdl missing---------------
+Tonight's release will need a restart of pacific-server also.
+If after restart, going to http://pacific:8080/pacific-ws-vendor/services
+does not show VendorLocationService wsdl, then try this:
+move pacific-ws-vendor.war out, then back into the deploy directory and it should expand the war which includes this missing wsdl.
+
+--------------Defect Pending Item screen missing drug info for Med alert -----------------------------
+Take action_hist action_obj# and find the product.product# that matches. Create AOPD from that.
+PendingItemFactoryService
+   if no aopd found, build out the ActionObj from the above rule for display.  5-drug, 6-practitioner
+   
+   ActionObjectDetail
+       ProductDetail -  actionObjectDetail.productDetail.name     ...fill in from Product
+						actionObjectDetail.drugDefinition
+						actionObjectDetail.productDetail.brand
+						actionObjectDetail.productDetail.drugClass
+						actionObjectDetail.productDetail.drugCategory
+						actionObjectDetail.quantity
+						actionObjectDetail.daysSupply	
+	   drugDefinition
+
+------------ Format exceptions in IFX9 ---------------
+good example of testing exception in AuthControllerTests. resetPasswordDisplaysMessageAndRendersForgotPasswordIfExceptionOccurs
+
+XE datasource
+jdbc:oracle:thin:@localhost:1521:XE
+DEV datasource
+jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=wes0odev01)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME = PMIDEV)))
+opac_common, pw: smgleucv
+
+wes0odev01.pmi.corp
+old
+jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=oracledev.pmi.corp)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME = pmi_dev.pmi.corp)))
+new
+jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=wes0odev01.pmi.corp)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME = PMIDEV)))
+
+
+------------Change order of Pending Item Summary to include Drug ----------------
+ActionHist has actionObjNumber
+    AOPD
+	
+PendingItemDetail  getDrugname returns AOD.productDetail.name as drug
+
+---------------Merge IFX9 to trunk------------------
+common-domain 38258-38589  IFX_common_domain1.0rc1
+ifx-data-access 38258-38771  IFX_data_access1.0rc1
+services 38262-38378  IFX_services1.0rc1
+ifx-web-services 38248  IFX_web_services1.0rc1
+ifx-web 38771-38270 IFX_web1.0rc1 
+
+------------ Changes to GRAILS_OPTS --------
+removed  JAVA_OPTS=-Xmx2048m -XX:PermSize=256M -XX:MaxPermSize=512M
+added   GRAILS_OPTS=-client -Xmx2048m -Xms768m -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:+UseParNewGC
+
+------------IFXTrain doesn't have Tokens to display potential rejects -----------
+NOTE - There is an ifxtrain schema to view ifxtrain entries in ifx_user table!
+train
+trainlm
+trainerlmac
+traineresis
+trainer.sdwk
+demo1
+
+select * from ifxtrain.ifx_user i
+where i.login = 'trainerlm';
+--where i.ifx_user_id = 1000551;
+
+select * from ifx_user_company c
+where c.ifx_user_id = 1000551; -- roleId 1
+
+select * from ifx_role;
+
+select * from ifx_privilege;
+
+select * from ifx_user_role_xref;
+
+select * from ifx_role_privilege_xref;
+
+select * from ifx_privilege;
+
+select * from ifx_privilege_token_xref;
+
+select * from ifx_token;
+
+----------------Missing medPlan pdf-----------------
+svn://isprod/var/svn/repos/ifx/misc/static_files/pdf/medplans
+missing_medplan.pdf ---- Matt needs to update this document.
+
+Manual test
+select * from pmi.claim# c
+where c.claim# = 'WC860-094225';
+select * from pmi.action_hist ah
+where ah.patient# = 2082280
+order by ah.action_date desc;
+select * from pmi.action_object_pharmacy_data aopd
+where aopd.action_recid = 19312400;
+
+TO GET DOCS TO WORK LOCALLY...
+select * from PMI.application_config ac
+where ac.name = 'IFX_MANUAL_BASE_URL';
+create yourself a /home/devuser/ifx/resources/ structure with /pdf/manual and /pdf/strategy underneath.
+
+home/devuser/ifx/resources is set by DB
+/pdf/strategy OR /pdf/manual is set by program
+
+------------ D Code for ESIS adjusters------------
+Token check, just like in ClaimController...
+securityService.isAllowed(session.user, IFXConstants.TOKEN_POTENTIAL_REJECTS, claimDetail)
+
+select max record info
+http://stackoverflow.com/questions/121387/fetch-the-row-which-has-the-max-value-for-a-column
+http://stackoverflow.com/questions/285477/best-way-to-select-the-row-with-the-most-recent-timestamp-that-matches-a-criteri
+
+select max(idh.recid) KEEP (DENSE_RANK last order by idh.add_date),                               
+max(idh.add_date) KEEP (DENSE_RANK LAST ORDER BY idh.add_date)
+from pmi.inbound_data_history 
+where patient# = :claim.patient
+and company# = :claim.branch.insCompany
+and processed = 1
+
+SubmitClaimService.  Line 143. This is how to check IFX resources for if ESIS or not.
+deloris.norfleat@esis.com  -test Esis IFX User
+jocelyn.pitillo@esis.com
+
+IFX User contact# 85158
+Referrals for that contact#
+Action Hists for patient# 90185:
+    select * from PMI.action_hist ah
+    where ah.open_flag = 'Y' 
+    and ah.ifx_direct = 0 
+    and ah.incident# = 1 
+    and ah.patient# = 90185;
+	
+	claims with pending items
+	contact on referral
+	sort by company to look for 334, look for patient#, or claim#. 
+	Then Yogi, create action.
+	
+	assert closeDate.dateTimeString == claimDetail.eligTermDate.dateTimeString
+
+-----------Activate selected Tab----------
+pendingItemRespond.gsp - selects tab based on variable, in doc.ready
+add logic in index.gsp of ClaimController to activate selected tab
+fragments - Jquery tab fragments allow you to append #someIdOfTab and the link will open that tab.
+
+
+
+
+------Dec 10-----
+ApplicationResourceMaker somehow removed all rows from are, ar, and application. (IFX9.0)  2
+Help TingTing test D-code                                                                  2
+External admin - demographic ajax save                                                     4
+------Dec 11------
+Order Entry in training having problems talking to Pricing. Phil redeployed Pricing in opacdev to fix.
+Creating design document for External Admin to attach in Ontime.    4
+Fax attempt problem in prod.          
+Penetration testing.  I took parameter tampering.	                4
+------Dec 12------
+Changed Elig term date to PPO date in D-code branch.
+External Validation  - not.phone doesn't seem to work                8
+-----Dec 14------
+External admin       8
+------Dec 18-----
+External admin - new Ifxuser and RefContact
+------Dec 19-----
+Get list of all co and branches to select home branch
+------Dec 20------
+Requirements change where they want Select All/Deselect All for branch drop down.
+-----Jan8------
+Letters from Dan Iven, couldn't find where creating in Pacific.
+DCR for app_config, and letter.
+
+
+----------External admin demographics screen----------1/1/2013
+Adjuster Id is RefContact.X400
+On changing email
+Prompt to the effect: “This will NOT change your login credentials for IFX 9x.  Please contact IFX Support for changes.”
+ADDITION - Exclude Payer branches from all external screens.  Ins_branch.contact = 'PAYOR'
+
+newUser ? '' : ifxUser.firstName
+
+
+------------pricing incident----------------
+select * from pmi.source_amount s
+where s.procedure_code = 'E0748'
+and s.modifier = 'NU'
+and s.state_code = 'PA';
+
+source_amount
+
+source_type
+
+price_plan   price-source-id 5 is Medicare fee schedule
+
+price_source
+
+price_source_type  - has audit
+
+E0748
+UMWA
+Pennsylvania
+Could not calculate price for Medicare price plan using procedure code E0748 and modifier NU
+
+select * from pmi.source_amount s
+where s.procedure_code = 'E0748'
+and s.modifier = 'NU'
+and s.state_code = 'PA'
+order by s.eff_date desc;
+
+select * from PMI.price_source;
+
+select distinct(ps.price_source_type_id) from PMI.price_source ps;
+select * from pmi.source_type;
+
+select * from AUDIT_OWNER.price_source_amount_audit;
+
+select * from price_source_type_audit t
+where t.PRICE_SOURCE_TYPE_ID = '13';
+
+select * from PMI.stfee_schedule ss
+where ss.u##state = 'PA' and
+ss.u##hcpc = 'E0748'
+and ss.modifier = 'NU'
+and ss.active = '1'
+order by ss.effective_date desc;
+
+select * from PMI.stfee_region sr
+where SR.U##STATE = 'PA';
+
+select * from PMI.price_plan p
+where p.price_source_id = 5;
+
+select * from PMI.price_load pc
+order by pc.load_date desc;
+
+-----------load source_amount table from Medicare file that wouldn't load. Emergency 1 day incident------
+dup based on state, proced_code, cost src, modifier, eff_date
+check for dups first, then create DCR of 88,300 records.
+I saved off the groovy script
+
+2013!!!!!
+2013!!!!!
+2013!!!!!
+
+----------------Ext admin email new users-------
+SEND_EMAIL to YES, which is cached
+teamdev1 is technically production in Config.groovy, so func test will send emails if flag is set.
+5713-Dcode is what's deployed on teamdev1 now. The override in Config.groovy would have to exist there to be safe.
+Then run tests locally, SEND_EMAIL is yes, and the override is picked up. grails.mail.overrideAddress="test@address.com"
+Changes have been shelved!
+UserAdminServiceIntTests.emailWelcomeLetterShouldSendWelcomeLetter  - tests email send
+
+--------------Dcode--------------------
+Comes from inbound data history
+display on Response screen
+for ESIS only
+User_notes field is D-code
+
+--------------Inactive Ref_Contacts should not be able to login, forwarding, escalation, etc.--------------
+Setup GF 2nd domain
+Setup internal users for IFX9
+Add new restrictions for State of Florida
+
+-----------Set up new IFX9 *internal* user-----------
+select * from pmi.pmi_user pu
+where pu.username like '%EKIENY%';
+insert into pmi.ifx_user (ifx_user_id, pmi_user_id, contact_number, login, date_created, last_login, forwarding_user_id, forwarding_begin, forwarding_end, sort_order)
+values (SEQ_IFX_USER.nextVal, 5763, null, 'ekieny', SYSDATE, null, null, null, null, null);
+insert into ifx_user_role_xref (ifx_user_id, ifx_role_id)
+values (v_ifx_userid, 2);   --2 is Mimic
+
+TO UPPERCASE %s/.*/\U&/g
+
+------------Second Glassfish domain for ifx9-secondary-------------
+/home/devuser/.jenkins/jobs/ifx9 - Build and Deploy/workspace  is the active path in Jenkins!  (use '\ ' to represent a space in cd command)
+/home/devuser/glassfish/domains/ifx9-secondary/config/ domain.xml lists ports used 
+
+/home/devuser/bin - start and stop scripts
+/home/devuser/glassfish/domains/ - all domains listed here
+
+/opt/java/glassfishv3.1.2/glassfish/bin  -create-domain here
+
+./asadmin create-domain --portbase 8400 --domaindir=/home/devuser/glassfish/domains/ ifx9-secondary
+Note! portbase 7200...not 72
+
+Without portbase, it created listener-port of 40480 and admin port of 43252.
+Its now 8448 8480     default JMS host 8476
+asadmin --host localhost --port 8448 enable-secure-admin
+
+/home/devuser/.jenkins/jobs/OPAC_AncillaryTT-Build_and_Deploy/workspace/Opac/Healthesystems/ear/target
+-------------Refactor UserAdminController------------------
+[companies.branches.flatten().sort(false) { x, y -> x.upperCompName <=> y.upperCompName ?: x.upperBranchName <=> y.upperBranchName }
+sort(false) does not mutate the original list.
+
+Tried this, but can't redirect to newUser after createNewUser with errors, because we lose the command obj.
+        if (command.hasErrors()) {
+            def allMessages = []
+            def errors = webUtilService.convertCommandErrors(command)
+            errors.each {
+                allMessages << it.message
+            }
+            flash.message = allMessages
+            redirect(action: 'newUser', params: [lastCommand: command], fragment: 'demo-info-tab')
+            return
+        }
+		
+------------LOTS of internal users setup. Both acct mgrs and CSS, and external State of FL---------------
+Internal Users:
+	CSS get role of 'Claims Professional', and access to 207 companies listed in prod_dcr_ifx_users_internal_multCompanies.sql
+	Acct Managers get role of 'Mimic' and access to their 1 company only
+	
+External Users:
+	Ting-Ting or John N will setup ref_contact if there isn't one.
+	Run DCR to give them ifx_user, password record, access to company(ies), and role
+	
+Company 38161
+Claim Professional
+
+Delete dup sfudge, ifx_user_id 50173
+
+Jessica Chavez 
+Clint Peterson
+Jasmine Urcino
+Jessica Landes 
+Aimee Elliott
+Thomas Urban
+Earl Hatch
+Brandon Stockton 
+
+-------------Add new user creates user even if it fails password validation later-----------------------
+Split passwordService validateAndUpdate into 2 parts. Call first part, if good then create User, then call second part.
+
+newUser - always secondary (from user Admin)
+editUser - Admin, or same user. not secondary. However, admin can reset password for secondary user.  - secondary or not
+
+-------------G:link not working in IE8-----------
+but this works...
+ <input type="button" class="cancelButton" value="Cancel" onclick="window.location = '${createLink(controller: 'settings', action: 'index')}'"/>
+ or
+ <g:actionSubmit action="cancel" value="Cancel"/>
+ 
+--------Books--------------
+ Sun Certified Java Programmer book
+-----------Liz Swantek can't run Open Actions report-------
+
+downloadOpenActionsExcel
+generateAndDownloadOpenActionFile
+
+ReportsController.generateAndDownloadOpenActionFile 
+	generator.generateFile(reportName, reportTitle, results, session.user.login as String, paramMap) -where paramMap is company,dateRangeBegin,dateRangeEnd
+Excel
+	public DownloadSession generateFile(String reportName, String[] reportTitle, Map<String, Object> reportParams, List<T> result, String userLogin)
+	
+---------- Misaligned report ---------------------------------
+
+UserAdminService.runMisalignedReport  - run for both internal and external
+         internal - don't need a user, need list of companies
+		 external - user, no list of companies
+    already built for External
+Internal  runMisalignedReport(null user, withoutPendingItems, withPendingItems, companyIds as list)
+External  runMisalignedReport(user, withoutPendingItems, withPendingItems)
+
+remove submit a claim token from Submit Claim privelege.  in ifx-Primary
+
+Refactor:
+created ReportService to generageAndDownloadMisalignedReportFile in ifx-services
+    called by AdminReportsController (web)    and     ReportsController (ifx-admin)
+      (which now passes reponse)                             new
+
+ReportService needs DownloadSession, which is now in ifx-services
+Align and ColumnFormat moved to ifx-services
+
+Tree Conflict:
+web/Excel/Excel.java
+web/Excel/MisalignedReportsExcel
+web/utitily
+web/pdf/MisalignedReportPDF
+web/pdf/PDF
+
+
+-- Grant User Admin to training users
+INSERT INTO ifx_user_role_xref 
+     (ifx_user_id,
+	  ifx_role_id)
+	  SELECT ifx.ifx_user_id  
+	    FROM ifx_user ifx where ifx.login like '%train%')
+		
+----------- RefContactBuilder.groovy runs against Excel to create ref_contacts and IFXUsers -------
+RefContactBuilder
+grails run-script src/groovy/RefContactBuilder.groovy
+operates on sedgwick.xlsx
+
+
+-------------Update training site scripts----------------
+data_ifx_role.sql                   +1 = 8
+data_ifx_privilege.sql             +1  = 9
+data_ifx_privilege_token_xref.sql   +1 = 30
+data_ifx_role_privilege_xref.sql      +1 = 11
+data_ifx_user_company.sql          +7 =  43
+
+--------------HES Invoice processor and send unbilled-------------
+To run both invoice and send unbilled:
+grab line from cron and run entire wget command from command line on hesprod01 with bbalser login.
+Just send unbilled:
+http://hesprod01:8080/healthesystems-webapp/servlet/BatchJobServlet?billingSendUnbilledInvoicesProcessorService&company=LIBERTY
+http://hesprod01:8080/healthesystems-webapp/servlet/BatchJobServlet?billingSendUnbilledInvoicesProcessorService&company=ACUITY
+
+Kick off ScheduleProcessorService
+http://hesprod01:8080/healthesystems-webapp/servlet/BatchJobServlet?SCHEDULEPROCESSORSERVICE=run;
+
+BatchJobServlet takes the param of which service to run.
+
+-------------ESIS logo--------------
+IfxTaglib resource.required if ESIS.  The resource is esis.css, which contains the logo and dimensions.
+
+-----------WebUtilService--------------
+Moved from ifx-web to ifx-services.  messages.properties is now an issue
+1)  Create 2 versions of webUtilService (ifx-admin & ifx-web) to point to their respective messages.properties
+2)  OR  pass in the messageSource
+
+Modules changed:
+
+Default
+C:\projects\ifx9\ifx-web\grails-app\controllers\ifx\web\AdminReportsController.groovy
+C:\projects\ifx9\ifx-web\test\unit\ifx\web\AdminReportsControllerTests.groovy
+C:\projects\ifx9\ifx-web\src\java\ifx\web\utility\Align.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\utility\Align.java
+C:\projects\ifx9\ifx-services\grails-app\conf\BuildConfig.groovy
+C:\projects\ifx9\ifx-web\grails-app\controllers\ifx\web\ClaimController.groovy
+C:\projects\ifx9\ifx-web\src\java\ifx\web\Excel\color_bar.png
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\Excel\color_bar.png
+C:\projects\ifx9\ifx-web\src\java\ifx\web\utility\ColumnFormat.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\utility\ColumnFormat.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common
+C:\projects\ifx9\common-domain\src\groovy\com\pmi\common\domain\DomainConstraintValidator.groovy
+C:\projects\ifx9\ifx-web\src\java\ifx\web\common\DownloadSession.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\DownloadSession.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\Excel
+C:\projects\ifx9\ifx-web\src\java\ifx\web\Excel\Excel.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\Excel\Excel.java
+C:\projects\ifx9\ifx-services\src\java\ifx
+C:\projects\ifx9\common-domain\grails-app\domain\com\pmi\common\domain\ifx\IfxLegacyBranch.groovy
+C:\projects\ifx9\common-domain\src\groovy\com\pmi\common\domain\ifx\makers\IfxLegacyBranchMaker.groovy
+C:\projects\ifx9\common-domain\grails-app\domain\com\pmi\common\domain\ifx\IfxPrivilege.groovy
+C:\projects\ifx9\common-domain\test\unit\com\pmi\common\domain\ifx\IfxPrivilegeTests.groovy
+C:\projects\ifx9\common-domain\grails-app\domain\com\pmi\common\domain\ifx\IfxRole.groovy
+C:\projects\ifx9\common-domain\test\unit\com\pmi\common\domain\ifx\IfxRoleTests.groovy
+C:\projects\ifx9\ifx-web\test\unit\ifx\web\IfxTagLibTests.groovy
+C:\projects\ifx9\common-domain\grails-app\domain\com\pmi\common\domain\ifx\IfxToken.groovy
+C:\projects\ifx9\common-domain\test\unit\com\pmi\common\domain\ifx\IfxTokenTests.groovy
+C:\projects\ifx9\common-domain\grails-app\domain\com\pmi\common\domain\ifx\IfxUser.groovy
+C:\projects\ifx9\common-domain\test\unit\com\pmi\common\domain\ifx\IfxUserTests.groovy
+C:\projects\ifx9\ifx-admin\grails-app\services\ifx\admin\InsCompanySearchService.groovy
+C:\projects\ifx9\ifx-admin\test\integration\ifx\admin\InsCompanySearchServiceIntTests.groovy
+C:\projects\ifx9\ifx-web\src\java\ifx\web\Excel\InvoiceHistoryExcel.java
+C:\projects\ifx9\ifx-web\src\java\ifx\web\pdf\InvoiceHistoryPDF.java
+C:\projects\ifx9\ifx-admin\web-app\css\main.css
+C:\projects\ifx9\ifx-web\src\java\ifx\web\pdf\MisalignedReportPDF.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\pdf\MisalignedReportPDF.java
+C:\projects\ifx9\ifx-web\src\java\ifx\web\Excel\MisalignedReportsExcel.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\Excel\MisalignedReportsExcel.java
+C:\projects\ifx9\ifx-web\src\java\ifx\web\Excel\MonthlyOverrideReportExcel.java
+C:\projects\ifx9\ifx-web\src\java\ifx\web\pdf\MonthlyOverrideReportPDF.java
+C:\projects\ifx9\ifx-web\src\java\ifx\web\Excel\OpenActionsExcel.java
+C:\projects\ifx9\ifx-web\src\java\ifx\web\pdf\OpenActionsPDF.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\pdf
+C:\projects\ifx9\ifx-web\src\java\ifx\web\pdf\PDF.java
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\pdf\PDF.java
+C:\projects\ifx9\ifx-services\plugin.xml
+C:\projects\ifx9\common-domain\src\groovy\com\pmi\common\domain\makers\PmiCodesMaker.groovy
+C:\projects\ifx9\ifx-web\src\java\ifx\web\pdf\PMILogo.gif
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\pdf\PMILogo.gif
+C:\projects\ifx9\ifx-web\src\java\ifx\web\Excel\PMILogo.png
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\Excel\PMILogo.png
+C:\projects\ifx9\ifx-web\grails-app\controllers\ifx\web\ReportsController.groovy
+C:\projects\ifx9\ifx-admin\test\integration\ifx\admin\ReportsControllerIntTests.groovy
+C:\projects\ifx9\ifx-services\grails-app\services\ifx\services\ReportService.groovy
+C:\projects\ifx9\ifx-services\test\integration\ifx\services\ReportServiceIntTests.groovy
+C:\projects\ifx9\ifx-services\test\unit\ifx\services\ReportServiceTests.groovy
+C:\projects\ifx9\ifx-web\grails-app\controllers\ifx\web\SearchController.groovy
+C:\projects\ifx9\ifx-services\src\java\ifx\services
+C:\projects\ifx9\ifx-web\src\java\ifx\web\Excel\TransactionHistoryExcel.java
+C:\projects\ifx9\ifx-web\src\java\ifx\web\pdf\TransactionHistoryPDF.java
+C:\projects\ifx9\ifx-data-access\grails-app\services\com\pmi\ifx\data\access\UserAdminService.groovy
+C:\projects\ifx9\ifx-web\src\java\ifx\web\utility
+C:\projects\ifx9\ifx-services\src\java\ifx\services\common\utility
+C:\projects\ifx9\ifx-services\grails-app\services\ifx\services\WebUtilService.groovy
+C:\projects\ifx9\ifx-services\test\unit\ifx\services\WebUtilServiceTests.groovy
+Unversioned Files
+	
+Exclude:
+IfxLegacyBranch
+IfxLegacyBranchMaker
+
+Delete from 6072:
+Excel/Excel.java
+Excel/MisalignedReportsExcel
+pdf/MisalignedReportPDF
+pdf/PDF.java
+	
+----------------Internal admin site-----------
+Prod:
+http://ifx-web-services.pmi.corp:6180/ifx-admin/
+
+-------------Bulk Operations for internal admin -----------------
+BulkExcelController - call bulkOperationService.processOperations on operationGroups
+BulkOperationService - parseAndValidate 
+                   and processOperations(bulkOperations)
+BulkOperation (interface)
+AbstractBulkOperation implements BulkOperation - validation for each Obj
+
+----------Merge Release1.3.1 into 6571 for Internal Misaligned rpt bug-------------
+called 6571B
+
+UserAdminServiceTests failing  can't find UserAdminService. findExistingActiveIfxUserWithMatchingEmailAddress
+
+<div class="nav" role="navigation">
+	<ul>
+		<li><a class="home" href="${createLink(uri: '/')}"><g:message code="default.home.label"/></a></li>
+	</ul>
+</div>
+
+--------------Add Claim to Briefcase is unsecure---------------------
+use TOKEN_PENDINGITEM_VIEW
+if (securityService.isAllowed(session.user, IFXConstants.TOKEN_POTENTIAL_REJECTS, claimDetail)) {
+
+------------Bypass Margin review logic-----------------------
+TrpParentCreateController
+   def setIsEligibleForKPIBypassInMarginReview(def hesPmiReferralDetail, def productInfo){
+
+        HesPasOverride override = pmiReferralService.findMatchingPasOverride(hesPmiReferralDetail.getHesPmiReferralDetailId())
+        def payAsSubmittedKPIBypassOutcomes = hesRefReasonOutcomeDAO.findAllKpiBypassOutcomes()
+
+        productInfo.isInMarginReview = ReferralScheduleStatus.MARGIN_REVIEW.getDescription().equals(hesPmiReferralDetail.getPmiStatus())
+        productInfo.isEligibleForKPIBypass = (isParentOrStandardDetail(hesPmiReferralDetail)
+                && productInfo.isInMarginReview == true
+                &&(hesPmiReferralDetail.getHesreferraldetailid() == 0L || hesPmiReferralDetail.getHesreferraldetailid() == null)
+                && payAsSubmittedKPIBypassOutcomes?.find {it.getCode() == override?.outcomeCode})
+
+    }
+OPAC:  ReferralMarginServiceBean
+	public Double calculateMarginPct(Double margin, Double price) {
+		price = price != null ? price : 0.0;
+		BigDecimal bigPrice = new BigDecimal(price);
+		BigDecimal marginPct = BigDecimal.ZERO;
+				
+		if(bigPrice.compareTo(BigDecimal.ZERO) != 0) {
+			BigDecimal bigMargin = new BigDecimal(margin);
+			marginPct = (bigMargin.multiply(new BigDecimal(100)).divide(bigPrice, 8, BigDecimal.ROUND_HALF_UP)).setScale(2, BigDecimal.ROUND_HALF_UP);
+		}
+				
+		return marginPct.doubleValue();
+	}
+	
+	PMIReferralServiceBean
+	    shouldCheckForMarginReviewRequired  - lists all exclusions for Margin bypass
+
+---------- Misaligned Report needs to only show IFX9 branches-----------------
+InsCompanySearchService - only pull branches not in IFXLegacyBranch
+
+------------------alternate license------------------------
+Currently, if Referral has alternate lic #, during assembleHesBillingData() we set ReferringPhysicianLicNumber already
+	from getAlternateLicense
+	
+Pacific Server:
+	AlternateLicenseService  findAlternateLicensesForPractitioner
+		AlternateLicenseDAO.findAlternateLicensesForPractitioner
+		(HibernateAlternateLicenseDAO) findAlternateLicensesForPractitioner 
+		
+OPAC common
+	PractitionerService
+	PractitionerServiceBean.getAlternateLicense - should return most current Alt Lic record based on Exp date.
+
+----------Use Token and WithForm ------------------
+http://tepani.wordpress.com/2013/03/08/usetoken-grails-2-1-1/
+
+onsubmit="disableExecuteButton();"
+
+
+----------------Admin dev groups--------------
+http://opacdev01.pmi.corp:6180/administration/pmiUser/show
+you must be part of IFX_ADMIN group to have Internal Admin access.
+
+---------------RELEASE TO BETA!!!!!-----------------
+Chizmar - create next Release branch 1.3.2
+Common-domain merge from our branch to trunk
+Tell Chizmar to release common-domain
+Merge branch ifx to release branch 1.3.2
+	ifx-admin 41681-42050
+	data-access 41682-42005
+	ifx-services 41683-41739
+	ifx-web 41684-41837
+	ifx-web-services nothing to merge
+Run all tests
+Commit all 5 modules via Tortoise
+build 1.3.2 web, ifx-web-services, and admin - moves artifacts to Nexus.
+(If need to rebuild after failure, remove svn ifx/web/tag/1.3.2 and Nexus 1.3.2 folder)
+Copy wars from Nexus to local machine
+deploy these to Glassfish beta.  (ifx-web on teamdev1. ifx-web-services and ifx-admin on wes0javadev01)
+Rename context root for all 3 apps to remove version#.  For Ifx-web, make sure to change app name to 'ifx' and remove the version too.
+
+After prod
+Merge branches up to trunk
+append _merged to Release branch to indicate it's been merged to trunk
+
+-------Nexus-------------
+Index of /nexus/content/repositories/releases/org/grails/plugins/common-domain/   -location of common-domain plugin
+
+ifx-web  start at 41684
+ifx-admin start at 41681
+ifx-data-access start at 41682
+ifx-services start at 41683
+
+/opt/java/glassfishv3.1.2.2/glassfish/bin> ./asadmin stop-domain --domaindir=/opt/java/domains ifx-web-services
+
+--------------Grails Versions--------------
+Ancillary TT 2.2.1
+IFX9 2.0.4
+CM 1.3.7
+Ancillary 1.3.5
+
+--------Bypass loadbalancers IFX9---------------
+http://wes0ifxapp01.pmi.corp:28080/ifx/auth
+http://wes0ifxapp02.pmi.corp:28080/ifx/auth
+
+
+------------IFX predictives displays wrong drug name--------------------------
+Assign correct action_obj# in Action_hist depending on action_type for action/reason , found in action_reason_xref
+actionHist.aopd.ndc to find product.id
+ClaimController/PendingItemService.processResponse
+Yogi and IFX9
+!!!!!!!!!!!use AOPD NDC to get Product Id.(table) from product is ActionHists.action_obj#.
+Since all predictives are drug related, no need to check if doctor or drug.  Always assume drug and do the line above.
+IFX9 web side:  Change needs to be made When you respond.
+To Test:  Choose prescriber alert, and med of Morphine with 1000 count in short period of time.  Should create predictive of 'drug' for qty. 
+
+
+Action  -->  Adjuster
+Reaction
+Predictive Alerts (always Drug)  Qty too high, cost too high, Days Supply too high
+Action_hist
+
+1)   Action Obj# 1234 ---> Dr Id   original Action_Hist
+2)   Predictives?
+3)   Copies Action Hist to create Predictive    Action Obj# 1)   5555 Vicodin
+Dr 5555  
+
+
+Action Object Pharmacy Data (AOPD) - all Pharm and drug data 
+
+Original ActionHist
+              AOPD  ndc#
+			  
+Copy  ActionHist  actionObj# = lookup Product id by ndc#
+
+Take actionHist's AOPD ndc#, use that number to lookup appropriate Product.  Product Id set in copied ActionHist.
+
+solution - newAction.actionObjNumber = Product.findByNdcNumber(actionHist.actionObjectPharmacyDatas?.collect { it }[0].ndc).id
+
+IfxActionHistoryFrame
+submit checked actions
+
+IfxActionHistoryItem
+	createActionHistSQL - action_hist.action_obj# is ifxItems.get(0).ID
+
+----------------Date compare across Daylight savings time-------------------
+function dateDiff(dateEarlier, dateLater) {
+    var one_day=1000*60*60*24
+    return (  Math.round((dateLater.getTime()-dateEarlier.getTime())/one_day)  );
+} 
+
+Couldn't get this to work:
+Math.round((new Date().getTime() - new Date($('#dateOfInjury').html()).getTime())/(86400000));
+Math.round((new Date().getTime() - new Date('2013-05-01').getTime())/(86400000));
+
+but this javascript does:
+$('#daysSinceInjury').html(Math.floor((new Date().getTime() - new Date($('#dateOfInjury').html()).getTime())/(86400000)));
+
+today:
+1367851735740
+1/11/2013:
+1357880400000
+convert to days:
+86400000
+
+---------------opacdev01----------------
+it's our sqa server environment
+appadmin
+billing, order entry, our new service deployed here
+/opt/java/
+bin/start_gf_application_services.sh
+
+------------Invoice History croaks if no records----------------------
+ClaimInvoiceHistoryReportService
+rx.therapeuticClass = rx?.gpi ? DrugClass.findByGpiSubstr(rx.gpi.substring(0, 2))?.className : null
+
+---------Web service to get LMN letter for ESIS---------------
+6800 - Anthony's restful service generation.  Done!
+6418 - Document service
+  Pacific branch already cut.  CreateLMNWizard
+We need to call this service with a template and map.
+Yogi calls our new internal Grails service, which calls this new service to return a custom LMN.
+
+StartLMNWizardAction
+CreateLMNQizard
+
+Table: LMN_Table_xref
+Add new column as external_ref_id to point to new external template ID. If set, use external service to find template.
+
+GetMergedPDF - only service we'll use
+GetPDFTemplate - future impl
+GetPDFTemplateList - future impl
+
+http://sqahub01.fhiwcd.net/PDFMergeService/PDFMergeService.svc/GetPDFTemplate?228
+http://betahub01.fhiwcd.net/PDFMergeService/PDFMergeService.svc/GetPDFTemplate
+
+curl -d "<root><template id=\"228\"/><field key=\"PATIENT-FULL-NAME\" value=\"Michael Chizmar\"/></root>" http://sqahub01/PDFMergeService/PDFMergeService.svc/MergePDF > test.pdf
+
+
+http://forums.sugarcrm.com/f3/groovy-grails-java-consume-soap-rest-service-65249/
+http://groovy.codehaus.org/GroovyWS
+
+
+-------------Misaligned Report showing old last name---------------------
+Julie Rawlins is the old name.  jkyrouacraw@hanover.com
+
+Srini Shanigaram - Big Lots
+---------------AncillaryTT AncillaryTT AncillaryTT AncillaryTT---------------------------------------------------------------------------------------------
+Ancillary TT prod link
+http://ancillarytt.pmi.corp:6480/AncillaryTT/orderAuth/list
+
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=177593
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=105320
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=112504
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=87512
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=161141
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=161141
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=163533
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=163549
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=163243
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=173406
+173407
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=174380
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=173708   //Kendall's
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=173708
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=175648
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=176136
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=177563
+
+
+I changed app_config_Detail 558 from 'http://teamdev1:8780' to Dan's IP to hit his OPAC.
+
+Location of docs:  Z:\IS\Staff\Projects\CURRENT\Dev ID 6148-HES TRP and LAN Changes
+
+should be able to:  anc_order_auth_tag.getPatientLocations()
+   
+
+%JAVA_HOME%\bin;C:\Program Files (x86)\IDM Computer Solutions\UltraEdit-32;C:\Program Files (x86)\CVSNT\;C:\glassfishv3\Sun\AppServer\bin;C:\DEVELOPMENT\IEDriverServer;C:\DEVELOPMENT\ChromeDriverServer;C:\DEVELOPMENT
+
+-vmargs
+-Xmx512m
+-XX:MaxPermSize=256m
+-XX:ReservedCodeCacheSize=64m
+
+
+(AncOrderAuthDAO - DAO Interface)
+JpaAncOrderAuthDAO - Impl   List<AncOrderAuth> findByAncOrderId(Long ancOrderId)
+Anc_Order_Auth  - Entity
+
+-----HesRFSReferralAssembler--------------
+create ReferralDetail.xsd from parent. Part that's populated is ReqSummaryLocation, which includes ReqDetailLocation inside it. Source to populate this
+    comes from AncOrderAughTag
+Cannot int test it.  GetReqSummaryLocation on AncOrderAuthTag always returns null.	
+
+		HesRFSReferralAssembler partialMock = new HesRFSReferralAssembler() {
+			@Override
+			public void populateAncOrderAuthDetails(HesPmiReferralDetail in, ReferralDetail out) {
+				System.out.println("in mocked method for populateAncOrderAuthDetails");
+			}
+		};
+
+------Create full HesPmiRefDetailHist-------
+In HesPmiReferralHistAssembler, createHesPmiRefDetailHist - fill out the SumLoc and DetailLoc.
+This means creating entries for hes_pmi_rdh_sum_loc_hist and hes_pmi_rdh_det_loc_hist.
+I created FK for SumLoc and DetLoc tables. They are COMMENTED OUT since I can't create them as IFXAdmin to PMI schema. THey are on G: under Project/Development
+Then need to make one-to-many relationships from HesPmiRefDetailHist
+                                                          |           
+												HesPmiRdhSumLocHist   
+												          |
+												HesPmiRdhDetLocHist
+												
+	partialMock populateSumLocAndDetLoc
+	
+			HesPmiReferralHistAssembler mockAssembler = new HesPmiReferralHistAssembler() {
+			@Override
+			public void populateSumLocAndDetLoc(HesPmiReferralDetail in, HesPmiRefDetailHist out) {
+				System.out.println("in mocked method for populateSumLocAndDetLoc");
+			}
+		};
+NOTE- Testing HesPmiReferralHistAssembler.populateSumLocAndDetLoc is difficult, as ancOrderAuth.getAncOrderAuthTag will always return null.
+
+
+---------------HES Billing file changes (DevId 6735)----------------------
+Add 3 modifier fields to HesBillingDataDetail, in case we ever do populate them someday.
+Add fields to WSDL - Referral and Billing modifier fields. (H - PartnerHESReferralWSDL.wsdl and H-ReferralAuthorizationWSDL.wsdl)
+We won't populate these new modifiers, but at least we'll have the columns in a table and wsdl ready to go if we do.
+
+               <xs:element minOccurs="0" name="additionalModifier1" nillable="true" type="xs:string"/>
+               <xs:element minOccurs="0" name="additionalModifier2" nillable="true" type="xs:string"/>
+               <xs:element minOccurs="0" name="additionalModifier3" nillable="true" type="xs:string"/>
+
+	
+BillingSendUnbilledInvoicesProcessor.process() calls billingService.validatePendingInvoices
+HESBillingServiceBean.validatePendingInvoices, 
+HESBillingFileAssembler.createHesBillingData	
+
+-----------Notes-----------
+CareManager will still exist for PMT Review and PAM.
+PAM will still reference application_config for Location Types.
+We have new Location_type table for new values.  Need to map new values to old to update appplication_config.
+
+--------------Ref Ack Detail Hist------------------------
+PartnerHESReferralClientServiceBean calls histAssembler.createHesPmiRefAckHist
+HesPmiReferralHistAssembler. createHesPmiRefAckHist
+							. createHesPmiRefAckDetailHistSet
+							. createHesPmiRefAckDetailHist
+HesPmiReferralHistAssembler
+	createHesPmiRefAckDetailHist - from ReferralAckDetail, create HesPmiRefAckDetailHist
+	
+----------Authorization populates AncOrderAuth, AncOrderAuthTag -------------
+referralDetailReasonCode, referralDetailStatusCode - translate to 'status'
+List<ApprovedSummaryLoc> --> AncOrderAuthTags
+refDetail.getPmiStatus()
+ReferralScheduleStatus.updatePmiStatus - sets all PMI Status from status/reason!!!
+
+ReferralAuthorizationServiceBean, calls assembler.createHesPmiRefAuth
+HesPmiReferralAuthAssembler
+	ancOrderAuthDAO - needs set
+	createHesPmiRefAuth
+		createHesPmiRefAuthDetail
+			populateAncOrderAuth - uses ancOrderAuthDAO instance
+			
+PmiReferralService - start with RefAuthDetail, update AncOrderAuth and AncOrder AuthTags
+	
+To be called from ReferralAuthorizationServiceBean(authDetail.getPartnerReferraldetailId)
+
+ReferralAuthorizationServiceBean.updateHesReferences
+		call PmiREferralServiceBean.updateAncOrderAuth(refAuth)
+		
+
+------------front end notes------------------
+pmiReferralService.checkForHesErrorResponse - can be used as-is for AncTT.  It checks last RefAckHist, looks at all RefAckHistDetails
+   for 11/10. Returns a boolean.
+So AncTT send method can perform this same service method as CM does.  displayHESError pulls in the refAckHist for that referral
+   in the session, and determines if there are refAckHistDetails again that have 11/10.
+		
+Example INT test: HesBillingServiceBeanIntTest
+
+AncillaryTTConstants - HES_WS_SERVER is appliction_config entry for OPAC. Change from Diven's laptop to Teamdev1.
+
+----------update AncOrderAuth tables on Auth Ack-----------------
+take ReferralAuthorizationServiceBean.updateHesReferences that calls updatedAncORderAuth
+incorporate that into HesPmiReferralHistAssembler.createHesPmiRefAckHist
+           createHesPmiRefAckDetailHistSet
+		   
+Start at Referral Ack
+	for each Referral Ack Detail, use partnerRefDetailId -> lookup detail
+	use that detail to hit AncOrderAuth, then update the approp. AncOrderAuthTag
+	
+	
+---------New Glassfish DOmain for AncTT-OPAC --------------	
+AncillaryTTDS
+AncillaryTTPool
+	oracle.jdbc.pool.OracleDataSource
+	
+	username  ifxadmin
+	driverClassName  oracle.jdbc.driver.OracleDriver
+	URL  jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=wes0odev01)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=PMIDEV)))
+	password  ifxadmin
+	
+$GLASSFISH_HOME/bin/asadmin --port 8548 --user admin --passwordfile /home/devuser/bin/AncillaryTT-password-file deploy --force=true $1
+
+successfully ---> ./asadmin --passwordfile /home/devuser/bin/AncillaryTT-password-file change-master-password --savemasterpassword true --domaindir=/home/devuser/glassfish/domains/ AncTT-OPAC
+
+OnbasePool
+Datasource ClassName: net.sourceforge.jtds.jdbcx.JtdsDataSource
+
+portNumber 4040
+databaseName Onbase
+datasourceName PmiOnBase
+networkProtocol tcp
+user HESGRP
+servername 172.18.6.220
+password hesgrp
+url jdbc:sqlserver://BIQA:4040
+
+/home/devuser/.jenkins/jobs/OPAC_AncillaryTT-Build_and_Deploy/workspace/Opac/Healthesystems/ear/target> /home/devuser/bin/deploy_gf_AncTT_OPAC.sh OPAC-Healthesystems.ear
+
+
+---------Assemble xml------------------
+PartnerHESReferralClientServiceBean.sendHesPmiReferral
+	calls rfsAssembler.createReferral(refIn);
+
+HesRfsReferralAssembler.createReferralDetail  - creates Referral.java and ReferralDetail.java obj
+	out.setAuthByName(of.createReferralDetailAuthByName(in.getAuthbyname()));
+	
+	
+ObjectFactory - converts java types (string, int, etc) to JaxBElement types
+	
+public class Referral {
+* &lt;complexType name="Referral">
+*   &lt;complexContent>
+*     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+*       &lt;sequence>
+*         &lt;element name="accessCode" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
+*         &lt;element name="action" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "Referral", propOrder = {
+    "accessCode",
+	"Action"...
+	
+    @XmlElementRef(name = "accessCode", type = JAXBElement.class)
+    protected JAXBElement<String> accessCode;
+	
+	
+ReferralValidator.xsd - xml in correct order. We use this to test against in ReferralValidatorTest
+
+--------------PricingService-------------------
+AncillaryTTConstants.getPricingService().findProductPrice(0, pricingParams)  returns ProductPrice obj
+
+ id="all-trip-details" data-url="${createLink(action: 'calculatePricing')}">
+ 
+ createAppt.js - initializeLocationAutoComplete uses data-location-url to call findPatientLocations    line 188
+ 
+ --------------send to HES------------------
+ PartnerHESReferralClientServiceBean.sendHesReferral
+        PartnerHESReferralWSv41PortType portType = client.getPort(createClientPortQname(), 
+			PartnerHESReferralWSv41PortType.class);
+				
+	ReferralAck refAck = portType.processReferral(refOut);
+	
+	
+        <g:if test="${enableProductAuth}">
+            <g:field type='button' name='addAuth' value='Add Product Authorization'  onclick="window.location = '${createLink(action: "create", params: [])}'"/>
+        </g:if>
+        <g:else>
+            <g:field type='button' name='addAuth' value='Add Product Authorization'  onclick="window.location = '${createLink(action: "create", params: [])}'" disabled = "true"/>
+        </g:else>
+
+http://teamdev1:8580/AncillaryTT/auth/login?targetUri=%2ForderAuth%2Flist%3Freferral%3D150238
+
+PartnerAHESReferralClientServiceBean
+	sendHesPmiReferral
+		updateHESReferences
+		
+156282 - 3 parents, first 2 PendingLMAuth, 1 updates pending.  just 1 RefAck cus outcome 529
+156287 - 3 parents fresh, all updates pending.  Created 3 RefAckDetailHist as expected.  THis is because we fixed bug in AncTT to remove 'Auth Needed' when back from HES.
+
+updateAncOrderAuth
+
+productId 0423400000083543    Transportation Services   from HES
+0423400000083543
+3247282 detailid
+
+---Ack---Ack----Ack-------
+select * from hes_pmi_ref_hist h where h.hes_pmi_referral_id = 162556 order by h.sent_date desc;
+  select * from hes_pmi_ref_detail_hist h where h.hes_pmi_ref_hist_id = 748806;
+    select * from ifxadmin.hes_pmi_rdh_sum_loc_hist h where h.hes_pmi_ref_detail_hist_id = 1481529;
+      select * from IFXADMIN.hes_pmi_rdh_det_loc_hist; -- h where h.hes_pmi_rdh_sum_loc_hist_id = 574;
+  select * from hes_pmi_ref_ack_hist h where h.hes_pmi_ref_hist_id = 748803;
+    select * from hes_pmi_ref_ackdtl_hist h where h.hes_pmi_ref_ack_hist_id = 748805;
+    select * from hes_pmi_ref_ack_error_hist e where e.hes_pmi_ref_ack_hist_id = 748805;
+    
+-------Authorizations---------------
+select * from hes_pmi_ref_auth a where a.hes_pmi_referral_id = 161146;
+  select * from hes_pmi_ref_auth_detail a order by a.hes_pmi_ref_auth_detail_id desc;
+    select * from hes_pmi_refauthdtl_outcome a; -- where a.hes_pmi_ref_auth_detail_id = 
+    select * from ifxadmin.hes_pmi_rad_ap_sum_loc; -- a where a.hes_pmi_ref_auth_detail_id = 153863;
+  select * from hes_pmi_ref_auth_ack;  
+
+select * from hes_pmi_sum_loc_type_products;    
+
+---------Ack changes----------------
+removed - Long countOfOrderedSchLines = hesPmiReferralDetailDAO.findCountOfAllOrderedScheduled(refDetail.getHesPmiReferralId());
+Logic is now:
+Ack , if 8/9 or 9/3
+	remaining = Ack Remaining
+      else 0
+The UI will interactively reduce the remaining by O/S lines. In case adds, deletes, this could get hard to track # remaining.
+
+------------Complete trip----------------
+AncOrderAppt if originatingLocation.key == 'ORLC'
+replace detail
+
+AncillaryOrderService.transmitAuthToHes
+PmiReferralServiceBean.transmitHes
+PartnerHESReferralClientServiceBean.sendHESPMIreferral
+HesRFSReferralAssembler.createReferral, createReferralDetail, line 320
+
+Building ReferralDetail out, from HesPmiReferralDetail in
+	detail -> ancOrderAuth
+	ancOrderAuth -> AncOrderAuthTags              ALLancOrderAppts
+	loop thru AncOrderAuthTags(order)
+	     new ReqSummaryLocation(reqSumLoc) <- populated from order
+	     reqSumLoc.getReqDetailLocation
+OR
+just populate the entire detail in AncillaryTT, then let OPAC move the approp fields.
+-----------RFS-----------------
+PmiRFSServiceBean.autoAcceptRFS
+	calls acceptRfs
+BatchJobWebService.runRfsAutoAccept
+** RFSProcessorService processRequest - this is what HES executes
+
+---------ServiceLocationSummaryTo----------
+When building child lines, serviceLocationSummaryTo should not be populated if child of Document Translation.
+Determine this by looking at parent Auth, and check the productId for Document Translation.
+
+---------Swing throws error sending to HES---------------
+WC205-079733, Referral 537406
+PricingException?
+Error when findLastCSS for Schedule?
+
+-----------Margin review----------
+MarginService OPAC
+ calculateMargin(Double quantity, Double authPrice, Double vendorAuthPrice, Double price, Double cost, Boolean isOverhead);
+ calculateMarginPct(Double authPrice, Double vendorAuthPrice, Double price, Double cost, Double quantity, Boolean isOverhead);
+
+CM :  productInfo.margin = marginService.calculateMargin(detail.getApprovedunits(), detail.getAuthPrice(), detail.getVendorAuthPrice(), null, detail.getUnitCost(), isOverhead)
+CM:  productInfo.marginPct = marginService.calculateMarginPct(detail.getAuthPrice(), detail.getVendorAuthPrice(), null, detail.getUnitCost(), detail.getApprovedunits(), isOverhead)
+
+populateAndSave...
+quantity      :
+authPrice     :
+vendorAuthPrice :
+price         :
+cost          :    
+
+Pacific uses MarginActionListener, which uses marginServiceAdapter
+AncillaryTT finds the margin service using the serviceLocator, but we can't invoke the calcMargin
+
+<td width="100%"><g:submitButton name="find_Vendors" value="Find Vendors" /><span id="messageBox" class="red-text" style="margin-left: 10px;"></span></td>
+
+function displayMargins(rendererObj) {
+    var marginPre = "<strong>Margin $: </strong>";
+    var marginPctPre = "<strong>Margin %: </strong>";
+    $("[id='margin["+rendererObj.row+"]']").html(marginPre + formatCurrency(rendererObj.marginVal));
+    $("[id='marginPct["+rendererObj.row+"]']").html(marginPctPre + formatPercentage(rendererObj.marginPctVal));
+
+    if (rendererObj.marginPctVal <= 10.00) {
+      $("[id='margin["+rendererObj.row+"]']").attr('class', 'red-text');
+      $("[id='marginPct["+rendererObj.row+"]']").attr('class', 'red-text');
+    } else {
+      $("[id='margin["+rendererObj.row+"]']").attr('class', '');
+      $("[id='marginPct["+rendererObj.row+"]']").attr('class', '');
+    }
+}
+
+----------CareManager-----------------
+http://teamdev1:4242/caremanager/?userName=COURTNEY&referral=126024
+
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=177593
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=177631
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=123560
+
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=126024
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=128123
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=128124
+
+AddOnLineController
+addProduct()
+productService.retrievePrice(patientNumber, params.productId, vendorNumber, 1D, new Date())
+productPriceHelper.determinePrice(productInfo, productPrice)
+
+    public retrievePrice(def patientNumber, def productId, def vendorLocationId, def quantity, def date) {
+        Patient patient = patientDAO.findByPatientNumber(Long.valueOf(patientNumber))
+        def productCatalogData = findProductCatalogInfos(patientNumber, productId)
+		String serviceType = productCatalogData.getServiceType()
+        def pricingParams = new HesPricingParams()
+        pricingParams.patientNumber = Long.valueOf(patientNumber)
+        pricingParams.productCode = productId.toString()
+        pricingParams.serviceType = serviceType.toString()
+        pricingParams.vendorLocationId = Long.valueOf(vendorLocationId)
+        pricingParams.quantity = Double.valueOf(quantity)
+        pricingParams.date = date
+        pricingParams.serviceLocationState = patient.getState().toString()
+        pricingParams.serviceLocationZip = patient.getZip().toString()
+
+        pricingService.findProductPrice(HesPricingStrategies.DEFAULT, pricingParams)
+	
+ADD:
+if hcpcQuantity < or > 1, unitPrice x hcpc Qty = final price to display
+
+CareManager SendToHesController.send
+calls referralTransmitService.sendHesPmiReferral
+OPAC PartnerHESReferralClientServiceBean.sendHesPmiReferral calls referralService.saveReferral
+which calls ReferralScheduleService.updateScheduleStatus
+
+expose updateScheduleStatus in ReferralScheduleServiceBean
+ReferralScheduleService
+ReferralScheduleServiceBean.updateScheduleStatus
+
+Add:
+Create a schedule at Save time, not getPricing time
+Save should flip status to Margin Review if < 10.00
+
+        if (margin <= 0.00) {
+            utilityService.createAndSaveSchedule(order)
+        }
+
+-------------Outcome required if PAS checked-----------------------
+$('.tt-trip-details .grid-body .grid-row').find('input[name="detail.0.payAsSubmitted"]').is(':checked');
+
+detail.${grid.index}.payAsSubmitted
+detail.${grid.index}.payAsOutcome
+
+http://jqueryvalidation.org/validate  - how to use index on validations
+
+        $.validator.addMethod("pasCheckedForOutcome", function(value, element) {
+            var isPASChecked = $(element).closest('.grid-row').find('.PAS').is(':checked')
+            var outcomeChosen = $(element).val();
+            console.log("closest cost:" + $(element).closest('.grid-row').find('.appt-cost').val());
+            console.log("isChecked:" + isPASChecked);
+            console.log("outcomeChosen:" + outcomeChosen);
+            if (!isPASChecked) {
+                console.log("not checked");
+                return true;
+            } else if (isPASChecked && outcomeChosen == "") {
+                console.log("checked and INVALID!");
+                return false
+            } else {
+                console.log("checked but valid");
+                return true;
+            }
+        }, "Required if PAS");
+
+        $.validator.addClassRules("outcomeDropDown", {
+            pasCheckedForOutcome: true
+        });
+	
+--------PAS Forced-----------------------
+map of product info : payAsSubmitForced, outcome
+sent to Edit Appt in mode="margin"
+if we don't already have an outcome, find DEFAULT PAS OUTCOME
+
+
+TrpParentCreateController
+def overrideInfoMap = productService.getInfoFromHesPasOverride(product, patientNumber, payAsSubmittedKpiOutcomeSet)
+
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=126024
+
+Start with ancOrderApptDetail, take the productCatalog.id get the product
+List out params that are built mostly from product, but repriceState from ancOrderApptDetail
+Call findMatchingPASOverride with those params.
+If Override is returned, return map of forced/pasOutcome
+
+-------------reqLocationName populated as live list------------
+Test using this referral:
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=132413
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=130299
+
+teamdev1 Caremanager debug port: 9097
+
+-------------No Schedule created if Margin Review-----------------
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=128123
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=128123
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=132413 - updated to Margin Review
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=128124 - updated to Margin Review
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=128124
+http://teamdev1:8580/AncillaryTT/orderAuth/list?referral=142538
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=142538  -- still works as expected
+http://localhost:8080/AncillaryTT/orderAuth/list?referral=146629  --telephonic.  Negative margin, but margin review bypass (cat 28) and went to Ordered
+
+CareManager SendToHesController.send
+calls referralTransmitService.sendHesPmiReferral
+OPAC PartnerHESReferralClientServiceBean.sendHesPmiReferral calls referralService.saveReferral
+which calls ReferralScheduleService.updateScheduleStatus
+
+AncillaryTT.AncillaryApptService calls updateScheduleStatusMarginReview now if Margin Review
+
+In OPAC, use AncOrderApptDetailDAO to determine if TRP/LAN.
+
+
+ReferralScheduleServiceBean.updateScheduleStatus
+get Referral
+attempt to get Schedule for that referralId
+if not found, 
+  call *addSchedule BELOW*
+  if no schedule.progressRecId, return (means no details? not really)
+  read that same schedule
+findLastCSS, transfer schedule to them
+find all details for that ReferralId
+setScheduleModifiers (based on detail fields)
+if schedModifier.priorityStatus = PendingPMTReview or MarginReview transfer schedule to ProviderMgmt
+if (#details > completedCount)
+  get first HesReferralScheduleXref for that scheduleId
+  update that xref description based on modifiers
+  if certain modifiers, update the schedule desc then save
+else 
+  delete schedule.
+
+ReferralScheduleServiceBean.addSchedule
+attempt to get Schedule for that referralId
+If not found,
+  get Referral
+  find all details (dlist)
+  get Patient
+  new Schedule()
+  set schedule.description (usually UPDATES_PENDING)
+  get PmiUser
+  set schedule.salesrep, and other schedule fields
+  if dlist is null, setDivision to default
+   else getDivisionForSchedule using referralDetailId.
+  if not supervisor, findLastCSS, transfer schedule to them.
+  save schedule
+  new HesRefScheduleXref(), populate, then save
+  return schedule.progressRecId
+
+AncillaryTT will need similar updateScheduleStatus but with map instead of Referral & details
+new Map - pmiStatus, isRush, hasOutcomeCode, pmiAuthPrice, authPrice, hesPmiRefDetailParentId, authUnits, approvedUnits
+
+ScheduleModifier - extension denied - any HesPmiRefAuthDetail.denyFlag = 'Y'
+		- requested locationtags denied - 
+		- requested num sum appts denied - 
+		- requested locations termed - 
+		- addt'l unrequested locations received - 
+  
+Cannot add a schedule for an inactive patient  
+  
+  
+--------------Setting up new laptop--------------------------------------------------  
+http://stackoverflow.com/questions/5290490/how-to-add-grails-to-intellij-idea
+http://www.jayway.com/2009/09/06/setting-up-grails-projects-in-intellij-idea/
+  
+alias  tt="cd /cygdrive/c/projects/AncillaryTT/AncillaryTT"
+alias  ttd="cd /cygdrive/c/projects/AncillaryTT/common-domain"
+alias  upall="ac && up && pc && up && pr && up && oe && up && bl && up && tt && up && ttd && up"
+alias  uct="uc && $GTA -unit -integration"
+
+/home/pmi/.gvm/groovy/current/bin:
+/home/pmi/.gvm/grails/current/bin:
+/home/pmi/.gvm/griffon/current/bin:
+/home/pmi/.gvm/gradle/current/bin:
+/home/pmi/.gvm/vertx/current/bin:
+/home/pmi/.gvm/bin:
+/home/pmi/.gvm/ext:
+/usr/local/bin:
+/usr/bin:
+/cygdrive/c/DEVELOPMENT/Java/jdk1.6.0_20/bin:
+/cygdrive/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:
+/cygdrive/c/oracle/product/10.2.0/client_1/bin:
+/cygdrive/c/DEVELOPMENT/Subversion Client:
+/cygdrive/c/DEVELOPMENT/oraclexe/app/oracle/product/10.2.0/server/bin:
+/cygdrive/c/Windows/system32:
+/cygdrive/c/Windows:
+/cygdrive/c/Windows/System32/Wbem:
+/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0:
+/cygdrive/c/DEVELOPMENT/TortoiseSVN/bin:
+/cygdrive/c/DEVELOPMENT/grails-2.2.1/bin:
+/cygdrive/c/DEVELOPMENT/Java/jdk1.6.0_20/bin:
+/cygdrive/c/DEVELOPMENT/apache-ant-1.6.2/bin:
+/cygdrive/c/DEVELOPMENT/apache-maven-2.2.1/bin:
+/cygdrive/c/Program Files (x86)/Mozilla Firefox:
+/cygdrive/c/DEVELOPMENT/jboss-3.2.7/bin:
+/cygdrive/c/Program Files (x86)/Hyland/OnBase Client:
+/cygdrive/c/DEVELOPMENT/Java/jdk1.6.0_20/bin:
+/cygdrive/c/Program Files (x86)/IDM Computer Solutions/UltraEdit-32:
+/cygdrive/c/Program Files (x86)/CVSNT:
+/cygdrive/c/glassfishv3/Sun/AppServer/bin:
+/cygdrive/c/DEVELOPMENT/IEDriverServer:
+/cygdrive/c/DEVELOPMENT/ChromeDriverServer:
+/cygdrive/c/DEVELOPMENT
+
+-----------Pricing---------------------
+Product code is 0208000000077146... HCPC is A4520.
+How is total price calculated in PBA in Order Entry?
+Incontinence products are billed at a custom hcpc and it ignores the product catalog hcpc.
+
+http://ci1:6080/Pricing/calculatePrice/calculatePrice.xml?providerName=INVACARE%20SUPPLY%20GROUP&providerLocationId=3103&productCodeTextField=0222400000007265&zipcode=30012&stateCode=GA&claimTypeId=7&date_value=04/20/2011&quantity=1&retrievalMethod=ProductCode&customerId=543&customerName=LIBERTY+MUTUAL+INS
+
+http://teamdev1:6080/Pricing/calculatePrice/calculatePrice.xml?providerName=INVACARE%20SUPPLY%20GROUP&providerLocationId=3103&productCodeTextField=0222400000007265&zipcode=30012&stateCode=GA&claimTypeId=7&date_value=04/20/2011&quantity=1&retrievalMethod=ProductCode&customerId=543&customerName=LIBERTY+MUTUAL+INS
+
+select * from price_source ps;  --16
+select * from price_source_amount psa where psa.price_load_id = 458 and psa.proc_code = 'A4520';
+select pl.load_date, pl.*, psa.* from price_source_amount psa 
+inner join price_load pl
+on pl.price_load_id = psa.price_load_id
+where psa.proc_code = 'A4520'
+order by pl.eff_date;
+
+select * from price_load;
+
+Incontinence price override table
+select * from pmi.umwa_incontinence_prices where hcpc = 'A4520';
+
+-----------Remove Texas DME rule (DevId 7769)------------------
+patientScreen.setupDMETab
+setBtnEnabled
+btnDMEHesReferral
+
+Controlled by this rule:  The return value was changed to 1 (Y).
+select * from rule_lookup rl where rl.rule_lookup_id = 875;
+select * from rule_lookup_detail rld where rld.rule_lookup_id = 875;
+
+Send to HES has a similar rule.  Need to remove this.
+PartnerHESReferralClientServiceBean  isValidForTXRule
+remove call to isValidToSendToHESForTXRule
+
+One time DCR to update all Patient Notes that say "we don't service TX" to say "we service TX" (see DevId)
+
+prod_dcr_DEVID7769_rule_lookup.sql - executed Sept 3.  This made the rule always return true (or 1).
+
+----------Billing files missing interpreter name-----------------------
+HESBillingFileAssembler.createHesBillingDataDetail
+
+hesprod1: /home/share/healthesystems/billing/archive - take the file daily and repair it with the command below.
++136 characters at end of line with...
+sed 's/\(^D.*\)/\1XXX/' testfile
+sed 's/\(^D.*\)%$/\1                                                                                                                                        %/' ABM_BILLING_LIBERTY_PRG_20130917000345.bak > ABM_BILLING_LIBERTY_PRG_20130917000345
+
+---------------No Margin Review screen needed if lines are AutoPAS------------------
+Each trip detail should be evaluated for MARGIN_REVIEW status or not, based on if in HES_PAS_OVERRIDES
+AncillaryApptService, line 121   around the point of determining scheduledNeeded true or false
+
+isScheduleNeeded -->  detail.margin% < 0
+                          if margin review bypass, false
+						  else if not PAS override, true
+						  (otherwise the variable remains unchanged, which could be true or false from previous apptDetails.
+this allows multiple detail lines in an APPT to skip going to MARGIN_VIEW if they are ALL negative,yet Auto PAS...or positive margin. It takes at least 1 negative line
+that isn't margin review bypass or PAS Forced to put the Appt into Margin Review.
+
+-----------UpdateAncOrderAuthTables in PartnerHesReferralClientServiceBean needs to be outside of the "9" only logic.-----------
+to be done.
+
+---------------------Liberty NW branches are switching to HES (DevId7251)------------------
+"Claim blocked from ABM program"
+	public static boolean isClaimBlocked(HesEligFeedData eligibilityFeedData) {
+		return HesCodes.ELIGIBILITY_ANCILLARY_STATUS_BLOCKED.equals(eligibilityFeedData.getAncStatus());
+	}
+select * from hes_elig_feed_data d where d.claim_num = 'WC604-798962';  --cannot have anc_status = 'B' which is blocked.
+
+Add branches to hes_Branches table to activate the 'referral' button on patientScreen.
+No coding changes needed.
+
+------------PHI Remediation--------------------------
+5947 - PHI Remediation
+we need updated_by and updated_Date on every table for auditing
+1 application per dev task
+
+ExportCode.groovy - checkout all PMI applications
+GrepRepos.sh - way to search for keyword across entire application
+
+start with first 3 on the list
+INVOICE_DENIAL_LINE_ITEM
+
+---------------Test IFX on teamdev2------------------
+teamdev2 debug port 8809
+
+select * from pmi_user pu where pu.username = 'SAGEE';
+select * from ifx_user iu where iu.pmi_user_id = 8450;
+select * from pmi_user pu where pu.username = 'DASTEPHE';
+select * from ifx_user iu where iu.pmi_user_id = 8392;
+select * from pmi_user pu where pu.username = 'DIVEN';
+select * from ifx_user iu where iu.pmi_user_id = 7488;
+
+select * from ifx_user_role_xref x where x.ifx_user_id = 50234;
+select * from ifx_role;
+
+select * from ifx_user_company c where c.ifx_user_id = 50234;
+select * from ins_company c where c.comp_name like '%Sedgwick%';
+
+-----------repair billing file ProviderId---------------------------
+sed -r 's/(.{20})(.{10})(.{10})/\1999999999\2/'
+sed -r 's/(^H.{624})(.{20})(.{25})(.*)/\1311192384           \2     \4/' ABM_BILLING_LIBERTY_PRG_20130927000546 > ABM_BILLING_LIBERTY_PRG_20130927000546.fixed
+sed -r 's/(^H.{644})([0-9-]+{10})(.*)/\1 311192384\3/' ABM_BILLING_LIBERTY_PRG_20130927000546 > ABM_BILLING_LIBERTY_PRG_20130927000546.fixed
+            645 chars,  10 chars of 0-9, the rest ...reverse this logic to be NOT 10 chars of 0-9-
+sed -r 's/(^H.{644})([ ].{11})(.*)/\1 311192384  \3/'
+
+Repair file first...then rerun this as ediuser...
+/home/share/batch_jobs/HES/bin/HES_billing_feed.sh > /home/share/batch_jobs/data/logs/HES_billing_feed_`/home/share/PMI/bin/datetime`.log 2>&1
+
+
+-------Engrish--------------
+what happening is
+how it knows this?
+this wasn't been there before
+all it does'es is
+the testings
+How do I contact some on online line from help desk
+
+Bob:
+We have reports that the HES slowness is causing impacts to other applications also.
+HES is non-responsive and some of the other Oracle Apps (*patient screen) is slow.
+
+PAcific Yog and HES – verified – to be up and functional.
+Please contact Help Desk if you or your teams report differently.
+
+
+
+-----------Beta TT button still pointing to CM------------
+select * from application_config ac where ac.name like '%CARE%';
+select * from application_config_detail acd where acd.app_config_id = 381;  --value was http://hesqa:5580/caremanager
+changed to:  http://wes0javadev01.pmi.corp:6480/AncillaryTT/orderAuth/list
+
+-------------Sedgwick complex Routing rules------------------
+DevId 8032
+IfxActionsService  17 parameters here
+http://teamdev2:8880/ifx-web-services/ifxActions/determineContact.xml?patient=10834959&actionNumber=6&reasonNumber=24&ndc=173044600
+http://localhost:8080/ifx-web-services/ifxActions/determineContact.xml?patient=10834959&actionNumber=6&reasonNumber=13&ndc=173044600  - 4 rules found, UR
+http://localhost:8080/ifx-web-services/ifxActions/determineContact.xml?patient=10834959&actionNumber=6&reasonNumber=24&ndc=173044600   -reason not found, default ADJ
+http://localhost:8080/ifx-web-services/ifxActions/determineContact.xml?patient=10834959&actionNumber=6&reasonNumber=24&ndc=59911588901  - product not found, default ADJ
+http://localhost:8080/ifx-web-services/ifxActions/determineContact.xml?patient=10834959&actionNumber=6&reasonNumber=10031&ndc=59911588901  - existing rule, UR for 6/10031
+
+IFX console on teamdev1:  teamdev1:7848   found in the domain.xml for ifx9 domain
+
+Ting-Ting tried...
+http://teamdev1:7880/ifx-web-services/ifxActions/determineContact.xml?patient=6304284&actionNumber=6&reasonNumber=13&ndc=00093690345&cost=18507.0
+ 
+IfxActionsService.determineContact - accepts 6 parameters (actionNumber, reasonNumber, cost, ndc, claimNumber, patientNumber)
+	def rule(just value)=getRoutingRule(IFX_ROUTING_RULE) *A*
+	if (rule)
+		getRuleDetails(rule)
+	if results have no contact types
+		getRuleDetails(IFX_ROUTING_DEFAULT_RULE)
+		
+*A* getRoutingRule - returns ruleValue!
+	calls getRule(stored proc), but only returns ruleValue
+
+RuleLookup getRule
+	stored proc, returns RuleLookup  - finds match via ruleDetails, but only return the RuleLookup
+      ---------------
+getRuleDetails
+	def ruleMap = getRule(ruleValue, claimDetail) *B*
+	def contacts = ruleMap.value
+	
+*B* getRule
+	rule=ruleService.getRuleAsMap
+	
+getRuleAsMap
+	my recursion code
+	returns Map results.value, results.details
+	
+    def getRuleAsMap(String ruleType, Date date, Map criteria) {
+        def endOfRuleChain = false
+        while (!endOfRuleChain) {
+            def ruleLookup = getRule(ruleType, date, criteria)   -- stored proc call
+            def results = [:]
+            if (ruleLookup) {
+//                Search for rule using ruleLookup.returnValue
+//                If found, continue next while
+//                If not found, endOfRuleChain =true, do below
+                results.value = ruleLookup.returnValue
+                def details = ruleLookup.getRuleLookupDetails()
+                def detailMap = [:]
+                details.each {detail ->
+                    detailMap.put((detail.fieldName), detail.fieldValue)
+                }
+                results.details = detailMap
+            }
+            results
+        }
+    }
+
+cut new branch 8032
+
+sed -r "s/(.*)/insert into rule_lookup_detail(rule_lookup_id, field_name, field_value) values(rule_id3, 'STATE', '\1'/"
+
+Order of Rules:
+Action/Reason
+State
+branch
+GPI  - 'UR', or Injury phase
+Injury Phase
+
+Ting-Ting test w patient/drug  11965772/FENTANYL     DIS 100MCG
+http://localhost:8080/ifx-web-services/ifxActions/determineContact.xml?patient=11965772&actionNumber=6&reasonNumber=13&ndc=00093690319&cost=7402.8
+http://teamdev2:8880
+
+-------------DEV IDs---------------------
+8032 - Sedgwick complex routing  (Ifx-data-access)
+7109 - IFX Responsive
+7251 - Hes branches LM NW
+7255
+7769 - TX ruleTKT136904 
+8109 - 8014 - Pricing/Product Catalog for Aquity
+
+
+
+Discussion on billing file
+
+
+543 - liberty
+111 - acuity
+processing - explicitly write Liberty to 1 stream, Acuity to another stream
+OR
+processing  - if next client ID not = previous 
+             new output file
+			 1,2,3
+			 
+mapping
+1 = Liberty = ABM_LIBERTY
+2 = Aquity
+3 = Travelers
+			 
+			 
+output
+  ABM_LIBERTY
+  ABM_ACUITY
+  ABM_TRAVELLERS
+
+--------------Pricing---------------------
+CalculatePriceController
+	calculatePrice ---- this is the entry point that OPAC calls from URL Pricing/calculatePrice/calculatePrice.xml?params
+	calls calculatePriceService.calculatePrice
+CalculatePriceService
+	new PriceCalculator created with CalculatePriceCriteria
+	new PriceCalculator.calculate()
+PriceCalculator
+	calculate
+		- priceMap = calculateFromStrategy
+	calculateFromStrategy
+		- getPriceAwpFlagAndPercentBilledFromStrategy
+	getPriceAwpFlagAndPercentBilledFromStrategy
+		- price = findPlanAndCalculate
+	findPlanAndCalculate
+		- calculateFromPlan(planGroup)
+	calculateFromPlan
+		- planGroup.calculate(criteria, result)
+												Plan Groups:
+		
+PricePlanGroup
+	calculateUsingAPlan
+		determinePriceGroup <-- New, add here?  No, see below.
+		makeCalculator      CostPlusPlanPriceCalculator can be one of them.  Executes helper.calculateCostMarkupAndPriceForPlusPercentage <--add criteria
+		calculator.calculate()
+		
+		calculateAfterValidation
+			retrievePriceComponentsFromPlans
+			for each pricePlan, calculateUsingAPlan(criteria)
+				
+PricePlanCalculatorHelper
+	calculateCostMarkupAndPriceForPlusPercentage  <-- Great!  It has criteria already. Use criteria.company.id to lookup priceGroup
+		
+		calculateCost
+		    variableCostServiceClient(CalculateVariableCostService).calculateVariableCost(criteria)
+				calls http://localhost:9090/ProductCatalog/costCheck/calculateCost.text
+				
+		
+IngenixPlanPriceCalculator
+	calculate
+		calulateBasePrice
+			calculateBasePriceFromProcedureCodeModifierAndPercentile
+			- extract GeoZip based off criteria.zipcode and criteria.stateCodeofJurisdiction  Default_geozip table
+					if criteria.zipcode already exists, don't perform the lookup.  AND off company.
+			- find priceLoad
+			- create params from helper Class PlanPriceCalculatorHelper
+			   def queryAndParms = helper.createQueryAndParms(procedureCode, modifier, percentile, plan, criteria.dateOfService, geozip, priceLoad) <-- add criteria.compy.id
+			- PriceSourceAmount.find(params)  -- Price_Source_amount???  What about Product_catalog_pricing??
+
+ProductCatalogPriceCalculator !!!
+	calculate
+		finds ProductCatalogPricing twice
+		use criteria.company.id to determine group here!!
+
+	
+PlanPriceCalculatorHelper.createQueryAndParms <-- add CSPI to query
+
+In OPAC... ReferralDetailDataModelHelper.updateReferralDetailProductPrice  
+		ProductPrice pricing = HealthesystemsMgmtServiceAdapterFactory.getInstance()
+			.getPricingServiceAdapter().findProductPrice(HesCodes.PRICING_STRATEGY_PAS, pricingParams);	
+		
+		PricingWebService
+			findProductPrice(int strategyId, HesPricingParams params)
+			
+		DefaultHesPricingStrategy
+			findProductPrice - passes many parameters
+			
+		PricingServiceBean  
+			callPricingService
+			findProductPrice, line 170 hard coded Liberty. This is where Acuity should be set.
+			                  line 173 callPricingService(AncillaryServiceParams, productPrice);  
+							  makeBaseCriteria allows AncServiceParams to match up to CalculatePriceCriteria
+							TO DO - ADD customerId of 543 or 22 and pricing will pick it up.
+
+CalculatePriceCriteria  params.customerId existence will lookup InsCompany
+
+To Test Liberty:
+http://teamdev1:6080/Pricing/calculatePrice/calculatePrice.xml?claimTypeId=7&serviceId=3&productCodeTextField=0423400000083543&providerName=PROCARE&providerLocationId=
+12233&zipcode=75109&stateCode=TX&date_value=11/19/2013&quantity=1&customerName=LIBERTY+MUTUAL+INS&customerId=543&retrievalMethod=ProductCode
+
+To Test Acuity:
+http://teamdev1:6080/Pricing/calculatePrice/calculatePrice.xml?claimTypeId=7&serviceId=3&productCodeTextField=0423400000083543&providerName=PROCARE&providerLocationId=12233&zipcode=75109&stateCode=TX&date_value=11/19/2013&quantity=1&customerName=ACUITY+INSURANCE&customerId=22&retrievalMethod=ProductCode
+
+
+http://stackoverflow.com/questions/12414526/unable-to-load-ejb-module
+-------------Claim vs provider state------------
+
+select * from pmi_codes p
+where p.type = 'LMFEESCHED';
+
+OPAC - StateBillingJurisdiction.findStateJursditionInPmiCodes
+healthesystems-product-catalog 
+PricingServiceBean.determineRepriceStateAndZip   (calls .getStateOrdinal)
+  	if (StateBillingJurisdiction.CLAIM_STATE == stateOrdinal) {    		
+    		String repriceZip = getRepriceZip(soj);
+    		productPrice.setRepriceState(soj);
+			productPrice.setRepriceZip(repriceZip);    		    		
+	} else {    		
+		productPrice.setRepriceState(serviceLocationState);
+		productPrice.setRepriceZip(getRepriceZip(serviceLocationState));   
+					
+In Pricing calls, if state of jurisdiction is a Claim State - repriceState is repricing Zip from pmi_codes
+																repriceZip is from SOJ of Patient
+if state of jurisdiction is Provider State - repriceState is serviceLocationState
+											repriceZip is from serviceLocationState
+All this info is stored in an instance of ProductPrice object of Pricing call.(PricingServiceBean.findProductPrice)
+This repriceZip and repriceState are passed as parameters to callPricingService.
+
+-----------HES_ABM_CUSTOMER------------------
+OPAC addReferral in PmiReferralServiceBean is hard coded to use HesAbmCustomer.LIBERTY
+Will need a way to choose between LM and Acuity in Yogi OR Look at Claim# -> branch -> company , then determine from that.
+
+JPAProductCatalogPricingDAO - does NOT include Liberty as a parameter.  Assumes all prices are Liberty.
+
+Mollie tested that Acuity Specific prices pull up in the wizard if Referral is for Acuity.
+
+Tynt blocking - http://daringfireball.net/2010/05/tynt_copy_paste_jerks
+
+Interesting
+select pc.product_catalog_id, pc.description, pcp.retail_price, pcp.price from product_catalog pc
+left outer join product_catalog_pricing pcp
+on pc.product_catalog_id = pcp.product_catalog_id
+where pcp.retail_price IS NOT NULL
+order by pcp.retail_price desc;
+
+select * from all_sequences s where s.sequence_name = 'PATIENT_SEQ';
+select max(patient#) from patient;
+DECLARE
+  l_currval pls_integer;
+BEGIN
+for i in 1..1241 loop
+select PATIENT_SEQ.nextval into l_currval from dual;
+end loop; 
+END;
+
+I don't like that Oracle's driver doesn't route a trigger failure back up to the application.
+dual list box - http://www.billsternberger.net/jquery/how-to-create-a-dual-listbox-in-jquery/
+
+Health Savings Account - You must open a CHASE account by completing the online application posted on Healthcare.Cigna.com.  
+https://preenroll.healthcare.cigna.com/healthcare/preenroll/app/bank/welcome.do
+
+
+-------------Common-persistence / common-domain--------------
+Build common-persistence-pmi with 'mvn install -DskipTests'
+A common-persistence-2.0 snapshot is added to /lib dir in AncillaryCommon
+Additional changes may have been made to common-persistence since the 2.0 was built for HES, but these changes may not work with AncillaryCommon
+common-domain should be where my new tables are added, but I will need to add a dependency in AncillaryCommon on common-domain! ...Don't do this!
+
+----------------Oracle XE-------------------------------
+Oracle XE installer trick
+http://blog.mclaughlinsoftware.com/2011/09/13/oracle-11g-xe-installer/
+
+Set ORACLE_HOME
+Add ORACLE_HOME to Path
+
+How to ping XE
+http://127.0.0.1:8080/apex/
+
+Run:  services.msc then verify running
+
+SQL>  connect as sysdba
+system
+password
+
+Start XE
+from start, Oracle 11g, Start Database
+
+Change port conflict with Glassfish/Oracle XE
+Exec DBMS_XDB.SETHTTPPORT(8090);
+
+But now 'Get Started' doesn't point to correct link.
+Instead use:  http://127.0.0.1:8090/apex/f?p=4950:1:1705171521283866
+Pricing and Prod Catalog need deployed to run tests
+
+Set autoextend on to give database more space:
+alter tablespace system
+  add datafile 'c:\oraclexe\app\oracle\oradata\XE\SYSTEM2.DBF' size 2G autoextend on;
+
+
+DbMaintain:
+SYS_C0016391 constraint is a dup.  Add 0 to end.
+SYS_C007900 constraint is a dup.  Add 1 to end.
+/dbmaintain_Scripts/src/main/database/ create_pmi_users.sql - run this first locally
+drop_users.sql - run this if constraint fails.  Then rerun 'ant'
+
+-- ALTER TABLE PMI.HES_ABM_CUSTOMER
+-- add CONSTRAINT UK1_HES_ABM_CUSTOMER UNIQUE (company_number);
+
+-----------------post dev refresh check-----------------------
+select 
+a.app_name,
+c.name, 
+d.value
+from application_config_detail d 
+join application_config c on c.app_config_id = d.app_config_id
+join application a on a.app_id = c.app_id
+where upper(d.value) like '%PROD%'
+;
+
+-----------------Outlook not refreshing-------------------
+Remove local version of outlook.ost file in /Users/sagee/AppData/Local/Microsoft/Outlook
+then restart Outlook
+
+------------ClassNotFoundException in Glassfish-------------------
+Ever set up a GF instance to run OPAC, Clinical Alerts, et al. just to find out you are missing dependencies needed for these legacy applications. 
+Search no more! I created a tar ball of these dependencies and put them in SVN: 
+
+svn://isprod/var/svn/repos/admin/Glassfish/legacy-dependency-jars
+
+Untar them  - add them to you legacy GF lib – voila, no more ClassNotFoundExceptions!! 
+
+-----------------testing------------------
+makeHesAbmCustomer(companyNumber: customer.id, customerId: 'TEST')
+makeCustomerPriceGroup(groupNumber: 2, companyNumber: customer.id)
+
+HesAbmCustomer
+	id:  customer_id    "LIBERTY"
+	companyNumber:     543
+	
+---------------Duplicate detail lines issue--------------------
+wc823-a21355
+referral: 591266
+Detail ID 1174821/1174823/1174825
+1144820/1174819/1174818 -aDups
+
+This example has migrated parents that have dup'ed, and new parents that don't dup
+Howard Kahn-WC68B-004927 Old duplicating referral: 591260.  New referral: 609131
+
+---Howard Kahn    
+select * from pmi.claim# c where upper(c.claim#) = 'WC68B-004927';
+select * from pmi.hes_pmi_referral r where r.patient_number = 2341963 and r.hes_referral_id = 591260; --corrupt referral
+select * from pmi.hes_pmi_referral_detail rd where rd.hes_pmi_referral_id = 126233; --all parents/children
+select * from pmi.hes_pmi_referral_detail rd where rd.hes_pmi_referral_detail_id = 1126315;  --one bad parent
+select * from PMI.hes_pmi_referral_detail rd where rd.hes_pmi_ref_detail_parentid = 1126315;  --dups
+
+select * from pmi.hes_pmi_referral r where r.patient_number = 2341963 and r.hes_referral_id = 609131; --good referral
+select * from pmi.hes_pmi_referral_detail rd where rd.hes_pmi_referral_id = 131040; -- all parents/children 
+select * from pmi.hes_pmi_referral_detail rd where rd.hes_pmi_referral_detail_id = 1157806;  --one good parent
+select * from PMI.hes_pmi_referral_detail rd where rd.hes_pmi_ref_detail_parentid = 1157806;  --dups
+
+select * from pmi.hes_pmi_referral_detail rd where rd.hes_pmi_referral_detail_id in (1126315,1157806); --side by side bad/good parent
+
+Found true duplicates with these queries:
+select rd.hes_pmi_referral_detail_id, rd.partner_create_date, rd.pmi_status, rd.productid_nonppi, rd.service_loc_name, rd.service_loc_name_to, rd.refdetail_status_code, rd.refdetail_reason_code, rd.* from PMI.hes_pmi_referral_detail rd 
+where rd.hes_pmi_referral_detail_id in (1174821,1174823,1174825,1174820,1174819,1174818) order by rd.partner_create_date, rd.productid_nonppi;
+
+select * from AUDIT_OWNER.hes_pmi_ref_detail_audit a where a.hes_pmi_referral_detail_id in (1174825, 1174819) order by a.audit_date;
+
+select l.*
+from application app
+  inner join application_audit_log l on app.app_id = l.app_id
+where app.app_name = 'AncillaryTT'
+order by l.log_time desc;
+
+select l.*
+from application app
+  inner join application_audit_log l on app.app_id = l.app_id
+where app.app_name = 'AncillaryTT'
+and l.message like 'There was an error trying to transmit HesPmiReferral%'
+order by l.log_time desc;  --126239 is Jeffrey Magnet's referral
+
+Facts:
+"most" of the lines come from migrated parents
+the only recreation in prod comes from Save and Send, with a spinner
+bad referral: Parent Indicator = 'Y', requested by name = "howard kahn", customer_specific_Detail_1 = 3129880
+good referral: parent Indicator = null, requested by name = "Prog Medical", customer_specific_Detail_1 = null
+
+ancillaryApptService.saveCompleteAppt
+createAppt.gsp - line 318, save for complete
+createAppt.js - my.submitForm
+
+why does the form have an action="save" if no Submit button. This seems dangerous. Ajax calls each call save as well.
+
+Kendall was able to recreate dups in dev by clicking 'OK' multiple times.
+
+--------------continue testing Pricing changes--------------------------------------
+To get pricing data set up in dev...
+
+insert into pmi.hes_abm_customer (customer_id, company_number, partner_format_version, access_code, partner_id)
+values ('ACUITY', 22, '4.1.1', 'f45OQORFzF9fLODrXacQ9d3XqtzTDg', 'PRG');
+
+insert into pmi.customer_price_group (cpg_id, group_number, company_number)
+values (SEQ_CUSTOMER_PRICE_GROUP.nextval, 4, 22);
+
+update product_Catalog_pricing pcp set pcp.group_number = 1;
+
+
+To Test Liberty:
+http://teamdev1:6080/Pricing/calculatePrice/calculatePrice.xml?claimTypeId=7&serviceId=3&productCodeTextField=0423400000083543&providerName=PROCARE&providerLocationId=
+12233&zipcode=75109&stateCode=TX&date_value=11/19/2013&quantity=1&customerName=LIBERTY+MUTUAL+INS&customerId=543&retrievalMethod=ProductCode
+
+To Test Acuity:
+http://teamdev1:6080/Pricing/calculatePrice/calculatePrice.xml?claimTypeId=7&serviceId=3&productCodeTextField=0423400000083543&providerName=PROCARE&providerLocationId=12233&zipcode=75109&stateCode=TX&date_value=12/2/2013&quantity=1&customerName=ACUITY+INSURANCE&customerId=22&retrievalMethod=ProductCode
+
+--------------Product Catalog changes for Pricing--------------------
+productRecordDomain folder
+	create.gsp
+	_commonAddProviderLink.gsp
+	
+http://www.jqueryscript.net/form/Responsive-jQuery-Dual-Select-Boxes-For-Bootstrap-Bootstrap-Dual-Listbox.html - starting resource
+http://www.virtuosoft.eu/code/bootstrap-duallistbox/ - the options explained
+http://stackoverflow.com/questions/8956799/how-to-include-jquery-js-in-grails - Installing Jquery after installed plugin
+https://groups.google.com/forum/#!topic/prototype-scriptaculous/3fGyeeUdiRQ - list box in prototype
+http://www.applicationgroup.com/tutorials/DualListBox/DualListBox_JS_Source.asp - list box in pure Javascript
+
+grails install-plugin jquery .... installed jquery-1.7.1
+Downloading: http://svn.codehaus.org/grails-plugins/grails-jquery/tags/RELEASE_1_7_1/grails-jquery-1.7.1.zip ...
+Download complete.
+Downloading: http://svn.codehaus.org/grails-plugins/grails-jquery/tags/RELEASE_1_7_1/grails-jquery-1.7.1.zip.sha1 ...
+Download complete.
+Installing zip C:\Users\sagee\.ivy2\cache\org.grails.plugins\jquery\zips\jquery-1.7.1.zip... ...
+    [mkdir] Created dir: C:\Users\sagee\.grails\1.3.5\projects\ui\plugins\jquery-1.7.1
+    [unzip] Expanding: C:\Users\sagee\.ivy2\cache\org.grails.plugins\jquery\zips\jquery-1.7.1.zip into C:\Users\sagee\.grails\1.3.5\projects\ui\plugins\jquery-1.7.1
+Installed plugin jquery-1.7.1 to location C:\Users\sagee\.grails\1.3.5\projects\ui\plugins/jquery-1.7.1. 
+
+Jquery way...
+common.gsp
+
+	jQuery.noConflict();
+	var $j = jQuery;
+	alert("Dual List Box!");
+	var demo1 = $j('[name=customerDualListBox]').bootstrapDualListbox(bootstrap2compatible);
+
+	<tr class="prop">
+		<select multiple="multiple" size="10" name="customerDualListBox">
+			<option value="option1">Option 1</option>
+			<option value="option2">Option 2</option>
+			<option value="option3" selected="selected">Option 3</option>
+			<option value="option4">Option 4</option>
+		</select>
+	</tr>
+
+create.gsp
+        <g:javascript src="libraries/jquery-1.9.0.min.js"/>
+        <g:javascript src="bootstrap-duallistbox/jquery.bootstrap-duallistbox.js"/>
+        %{--<link href="bootstrap-duallistbox/bootstrap-duallistbox.css" rel="stylesheet" type="text/css" media="all">--}%
+        <script src="http://code.jquery.com/jquery-1.10.1.js"></script>
+        <script src="http://code.jquery.com/ui/1.10.1/jquery-ui.js"></script>
+		
+Javascript way...
+http://kgaddy.com/jqueryMoverBoxes/
+http://www.developergeekresources.com/examples/javascript/javascript-listbox_to_listbox.php
+
+var customerFromList = document.getElementById("CustomerFromList");
+            for(var i = 0; i <= allCustomers.length; i++) {
+                var opt = allCustomers[i];
+                var element = document.createElement("option");
+                element.textContent = opt;
+                element.value = opt;
+                customerFromList.appendChild(element);
+            }
+			
+SELECT ALL!!!!
+http://stackoverflow.com/questions/9924666/jquery-select-all-options-of-multi-select-select-box-on-click			
+			
+Toggle Companies on sendToHes check:
+addonParent.gsp in CM, good example
+
+Jquery way to toggle:
+   function toggleCustomerList() {
+        var custFromList = 'select[name="customerFromList"]';
+        var custButtons = 'select[name="customerButtons"]';
+        var custToList = 'select[name="customerToList"]';
+
+        if ($(custFromList).is(':disabled')) {
+            $(custFromList).removeAttr('disabled');
+            $(custButtons).removeAttr('disabled');
+            $(custToList).removeAttr('disabled');
+            $('#customerList').show();
+        } else {
+            $(custFromList).attr('disabled', 'disabled');
+            $(custButtons).attr('disabled', 'disabled');
+            $(custToList).attr('disabled', 'disabled');
+            $('#customerList').hide();
+        }
+
+        return true;
+    }
+
+Javascript way to submit form:
+document.createForm.submit();	
+	
+---------------ProductRecordDomainController and tests---------------------------------------------------------------
+use ManageProductCatalogService to createProxy and createObjects to mock
+
+cd "dbmaintain"
+/usr/bin/unzip -o dbmaintain.zip
+rm dbmaintain.zip
+
+009_dev_add_not_null_properties.sql
+alter table PMI.PRODUCT_CATALOG_FORMULARY
+  modify(INS_COMPANY_NUM not null);
+  
+010_dev_add_null_properties.sql
+alter table PMI.PRODUCT_CATALOG_FORMULARY
+  modify(INS_COMPANY_NUM null);
+
+--------------Product Catalog Formulary--------------------
+When terming product, it looks up Formulary rec for that product Id.
+If exception, catch block creates new formulary rec with term date...but for what ins company?
+To be addressed when we fix bulk uploader.
+ProductCatalogFormularyHelper??
+
+---------------Tests---------------------------
+ManageAttachedProvidersServiceIntTests   new part num="test", expect "old -/-> new"
+DiscontinuedFlagReasonTests  can't figure out test failure reason
+common-util needs built too!
+ManagePriceServiceIntTests - looks like related to bulk product loader, extending Record. common-util needed rebuilt.
+
+ProductRecordDomain
+	findCustomersOfferingProduct
+ProductRecordDomainIntTests
+	testFindCustomersOfferingProductShouldReturnCorrectRecords
+		use ManageProductCatalogService to createProducts with x association
+		
+		ManageProductCatalogService uses proxy (ProductRecordWebService)
+		
+		ProductRecordWebService (proxy)
+			   createProductWithPricingAndVendor
+			   createProduct
+					calls productHandler.handleRecord to persist obj
+
+		ProductRecordHandler                               extends RecordHandler,  handleRecord calls process()
+			process ...productRecord = getRecord()
+			processCompanyXref
+			processCompanyXrefForHesProduct *******
+		ReviewRecordHandler
+			createNewProductCatalogCompanyXref
+	
+------------Edit Product screen----------------------
+0423400000083543
+14319 - this productCode is for 543 & 22
+0210900000014209  --- for teamci1, for 22
+02129918654A3971261  --- for teamdev1, for 543&22
+
+FOR SAVE! ProductRecordHandler
+	processCompanyXrefForHesProduct - if not found on lookup, create and save new ProdCatCmpyXREF
+	need to pass company list to ProductRecordHandler
+
+Process Chain:
+ProductRecordDomainController --UI--
+ManageProductCatalogService.createProductWithPricingAndVendor - create allHesAbmCustomers here   --UI--
+      uses productWebService.  Configure location.
+ProductRecordDomain - properties
+ProductRecord - add List of customers
+ProductRecordWebService.createProduct - calls productHandler.handleRecord(productRecord)
+ProductWebService                                                     --------------> in common-persistence-pmi
+ProductService - interface
+ProductServiceBean.findProductCatalogCompanyXrefForProductAndCustomers
+ProductRecordHandler.processCompanyXrefForHesProduct  - changed to pass in List of customers now.
+
+create.gsp, edit.gsp, common.gsp
+
+		List<Long> allHesAbmCustomers = productRecord.getHesAbmCustomerList();
+		try {
+		    xref = productService.findProductCatalogCompanyXrefForProductAndCustomers(
+		        productCatalog.getProductCatalogId(), allHesAbmCustomers);
+				
+0512900000012285
+
+/nexus/content/repositories/snapshots/OPAC/healthesystems/healthesystems-product-catalog/2.3-SNAPSHOT/
+
+---------------------------------------
+teamCI1 - product catalog services
+Uploads: 
+healthesystems-product-catalog/2.3-SNAPSHOT/healthesystems-product-catalog-2.3-SNAPSHOT-client.jar
+
+
+teamCI1 - healthesystems-webapp
+Downloads:
+healthesystems-product-catalog/2.3-SNAPSHOT/healthesystems-product-catalog-2.3-SNAPSHOT-all.jar
+											healthesystems-product-catalog-2.3-SNAPSHOT-client.jar
+Uploads:
+healthesystems-product-catalog-web/2.2-SNAPSHOT/healthesystems-product-catalog-web-2.2-SNAPSHOT.war
+
+
+TeamDev1 - healthesystems-webapp Build
+Downloads:
+healthesystems-product-catalog/2.3-SNAPSHOT/healthesystems-product-catalog-2.3-SNAPSHOT-all.jar
+
+Uploads:
+healthesystems-product-catalog-web/2.2-SNAPSHOT/healthesystems-product-catalog-web-2.2-SNAPSHOT.war
+
+-------------------Manage Price-----------------------
+ManagePriceController
+	creates 4 new Pricing records
+
+ProductRecordHandler.processCompanyXrefForHesProduct
+before indiscriminately adding ProductCatalogCmpyXref...
+	Does CustomerPriceGroup contain a company for that group (Chad already checks this before sending to HES)
+
+	If product has changed or new CustomerId added to list,
+	then set ProductCatalogCompanyXref.ProductReviewDate for that company.
+	
+PricingRecordHandler
+	If price is changing for that group, (get last effective date from Pricing, look at price, compare to entered price)
+	then set ProductCatalogCompanyXref.PricingReviewDate for that company.
+
+    private Boolean priceChangedForCompany(Long customerId) {
+
+        //productCatalog.getProductCatalogId();  //Get Pricing for this product catalog id...and the Group for the following customerId
+        //customerId   //Lookup PricingGroup for this customerId
+
+        return true;
+    }
+	
+	Product level - me
+	Pricing level - Brenda
+	
+ProductRecordDomainController  updateWithUser, createRecordDomain, then updateProductCatalogWithAdditionalData saves to ProductCatalog	
+ManageProductCatalogService	- use 'update' method to pass ProductRecord and UPDATECompanyXref.  proxy.updateProduct
+   (productRecord in service already contains customerIdList)
+ProductRecordWebService.updateProduct  -> handleRecord 
+
+onChange: function (val, inst) {
+		$.ajax({
+			type: "GET",
+			data: {country_id: val},
+			url: "ajax.php",
+			success: function (data) {
+				$("#boxCity").html(data);
+				$("#city_id").selectbox();
+			}
+		});
+	},
+	
+-------------Margin review bypass-----------
+Done in 6148
+-- Add entries to HES_MARGIN_REVIEW_BYPASS view
+-- ======================================================
+-- delete from pmi.pmi_view_controls where view_name = 'HES_MARGIN_REVIEW_BYPASS' or view_name = 'X_HES_MARGIN_REVIEW_BYPASS';
+insert into pmi.pmi_view_controls (VIEW_NAME, COLUMN_NAME, VALUE_STRING, VALUE_NUM, VALUE_DATE) values ('HES_MARGIN_REVIEW_BYPASS', 'PRODUCT_CODE', '0423400000083543', null, null);
+
+----------IFX Search split into Claim/Pending Item searches (DevId 7685)-----------------
+SearchController.search
+	buildSearchParams from command  (both Claim and PendingItem)
+	call SearchService.search
+	
+SearchService.search
+	create Where clause
+	create SortOrder clause
+	getQuery
+	Claim.executeQuery
+	take results...collect into ClaimSummaries
+	
+OnlyOpenPendingItems = actionHist.openFlag
+
+        $('#beginDate').datepicker({
+            buttonImageOnly: true,
+            showOn: 'both',
+            buttonImage: '${resource(dir: 'images', file: 'datepicker.gif')}',
+            onSelect: function(selectedDate) {
+                $('#endDate').datepicker('option', 'minDate', selectedDate);
+            }
+        });
+	
+admin - 7032 branch
+data-access - 7685-B  done 
+ifx-services - 7685-B  done
+ifx-web  - 7685-B  done
+ifx-web-services - 8032
+
+1800xxxyyyy@faxmaker.com – to fax scans 
+
+sed '/<ssn>/s/></>123456789</g'   - replace >< with >123456789< on all lines that contain <ssn>
+
+Results of test:
+select claim,  (select min(ah.actionDate) from ActionHist as ah where ah.patient = claim.patient and ah.openFlag = 'Y' 
+                and ah.ifxDirect = 0 and ah.incidentNumber = 1 
+                and ah.action.id not in (:excludedOpenActions)) as firstActionDate              
+from Claim as claim         
+where claim.upperCompany = 'PMI'            
+and claim.primary = 1             
+and claim.patient.referrals is not empty             
+and (claim.upperClaimNumber = :claimNumber0)               
+and (claim in (select ifxUserClaim.claim from IfxUserClaim as ifxUserClaim 
+where ifxUserClaim.ifxUser = :ifxUser)                 
+or claim.branch in (select ifxUserBranch.branch from IfxUserBranch as ifxUserBranch 
+where ifxUserBranch.ifxUser = :ifxUser                         
+and (ifxUserBranch.soj is null or ifxUserBranch.soj = claim.patient.incident.claimState ) )                 
+or claim.branch.insCompany in      (select ifxUserCompany.insCompany from IfxUserCompany 
+                                 as ifxUserCompany where ifxUserCompany.ifxUser = :ifxUser                         
+								 and ( (ifxUserCompany.employer is null or ifxUserCompany.employer = claim.patient.incident.employer )                             
+								 and (ifxUserCompany.soj is null or ifxUserCompany.soj = claim.patient.incident.claimState )  )  )  )         
+		order by firstActionDate asc, claim.claimantLastName, claim.claimantFirstName, claim.id  
+		
+
+http://stackoverflow.com/questions/17016598/jquery-ui-picking-a-start-and-end-date-within-range-based-on-start-date  - end date based on start date
+
+	
+			onSelect: function(selectedDate) {
+                var fromDate = $('#beginDate').datepicker('getDate');
+                var endDateMax = new Date();
+                endDateMax.setDate(fromDate.getDate() + 90);
+                $('#endDate').datepicker('option', 'maxDate', endDateMax);
+				$('#endDate').datepicker('option', 'minDate', selectedDate);
+                console.log('ed' + endDateMax);
+            },
+            onClose: function() {
+                $(this).trigger('change');
+            }
+			
+div id=search-content  Form		
+  div id=advanced-search
+	div left-third class column
+		select
+	div center-third class column
+		select
+	div right-third	class column
+		select
+	
+	
+    #search-content .right { --the Form
+        float: left;
+        width: 100%;
+    }
+	#advanced-search .column {  --column is 30% of parent div
+		width: 30%;
+	}
+    #left-third select {  --selects are 100% of column div
+        width: 100%;
+    }
+
+    #center-third .input {
+        width: 100%;
+        display: inline;
+    }
+
+    #right-third select {
+        width: 100%;
+        display: inline;
+    }
+
+-----------------	
+	#advanced-search .column {
+        width: 30%;
+    }
+
+    #search-content .left-third {
+        float: left;
+    }
+
+    #search-content .center-third {
+        display: inline;
+    }
+
+    #search-content right-third {
+        float: right;
+    }
+	
+select * from pmi.ifx_user ifx where ifx.login like '%patricia.olow%';
+select * from PMI.ifx_user_company iuc where iuc.ifx_user_id = 52192;
+select * from ifx_user_branch iub where iub.ifx_user_id = 52192;
+select * from ifx_user_claim iuc where iuc.ifx_user_id = 52192;
+
+select * from ref_contact rc where rc.contact# = 19257;
+select * from pmi.ifx_password_hash_hist phh where phh.ifx_user_id = 52192;
+
+select * from referral r where r.contact# = 19527; --patients 193273, 662853, 5937407
+
+select * from patient p where patient# = 662853;
+
+select * from claim# c where c.patient# = 662853;
+
+------------------claimSearch vs pendingItemSearch---------------------
+claimSearch:
+searchContentForm_claim
+searchContent_claim
+branch_claim
+
+pendingItemSearch:
+searchContentForm
+searchContent_pendingItem
+branch_pendingItem
+
+--------TKT154834------------
+Claim merge getting FK exceptions.
+COMBINE_PAT is a stored procedure used to combine patients and all supporting table entries.  It's in App Central.
+Path to application: Exchange - Misc Applications -  Patient Merge
+The two errors appearing are:
+  FK2_IBP_BATCHES_INVOICES - IBP_BATCH_INVOICES table has FK of claim# to Claim table.
+  FK3_CAA_REPORT_DETAIL - CAA_REPORT_DETAIL table has FK of patient_num to Patient table.
+The last part of the stored procedure deletes the old patient, and old claim however it can't do this with the FK above. 
+CAA_REPORT_DETAIL records need to point to the good patient.
+I believe the fix is to add the following to COMBINE_APT:
+UPDATE pmi.CAA_REPORT_DETAIL caa
+   set caa.patient_num = pat2
+ where caa.patient_num = pat1;
+ 
+UPDATE pmi.IBP_BATCH_INVOICES ibi
+ set ibi.claim# = v_to_claim_id
+ where ibi.claim# IN (SELECT progress_recid FROM pmi.claim# WHERE patient# = pat1);
+--must be before delete from claim!
+
+
+Error ancillaryApptService: 245  ancOrderAuth on null obj.
+
+Simple CSS tricks ------- http://www.elegantthemes.com/blog/resources/divi-css-tricks
+
+2014!!2014!!2014!!2014!!2014!!2014!!2014!!2014!!
+
+----------Release of Acuity--------------
+I merged and built OPAC, Pacific. Released to beta OPAC, CM, AncillaryTT.  Shouldn't SCM do this?  Review time!!  See file HES-CM-AncTT-beta.txt in H:
+G:\Shared\dastephe\8109_DCRS
+
+---------Duplicate claim# in IFX (DevId 8781)------------------
+Search for claim# 10111770, as pat olow and 2 results should show now.
+
+select * from claim# c where c.claim# = '10111770';
+select * from ifx_user ifx where ifx.login like 'patricia.olow%';
+select * from ifx_user_claim iuc where iuc.ifx_user_id = 52192;  --pat olow now has claim access to 10111770.
+
+select * from ifx_role;  --3 is claims professional
+select * from ifx_privilege p where p.ifx_privilege_id in (1,2);
+select * from ifx_role_privilege_xref x where x.ifx_role_id = 3;
+select * from ifx_privilege_token_xref x where x.ifx_privilege_id in (1,2);
+select * from ifx_token t where t.ifx_token_id in (2,3,4,5,6,7,8,10,11,12,14,15);
+
+select distinct token.IFX_TOKEN_ID, token.name, token.note 
+ from ifx_role role 
+ inner join IFX_ROLE_PRIVILEGE_XREF privileges1_ 
+   on role.IFX_ROLE_ID=privileges1_.IFX_ROLE_ID 
+ inner join ifx_privilege ifxprivile2_ 
+   on privileges1_.IFX_PRIVILEGE_ID=ifxprivile2_.IFX_PRIVILEGE_ID 
+ inner join IFX_PRIVILEGE_TOKEN_XREF tokens3_ 
+   on ifxprivile2_.IFX_PRIVILEGE_ID=tokens3_.IFX_PRIVILEGE_ID 
+ inner join ifx_token token 
+   on tokens3_.IFX_TOKEN_ID=token.IFX_TOKEN_ID, 
+ CLAIM# claim5_ 
+ where claim5_.PROGRESS_RECID=5216786 
+   and (role.IFX_ROLE_ID in 
+        (select iuc2.IFX_ROLE_ID from ifx_user_claim iuc2, ifx_role ifxrole2 
+        where iuc2.IFX_ROLE_ID=ifxrole2.IFX_ROLE_ID and iuc2.IFX_USER_ID=52192 and iuc2.CLAIM_ID=claim5_.PROGRESS_RECID) 
+       );
+
+	   select * from ifx_role role, claim# claim
+ where role.ifx_role_id in (select iuc.IFX_ROLE_ID from ifx_user_claim iuc, ifx_role ifxrole
+        where iuc.IFX_ROLE_ID=ifxrole.IFX_ROLE_ID and iuc.IFX_USER_ID=52192 and iuc.CLAIM_ID=claim.progress_recid);
+ 
+ select iuc.IFX_ROLE_ID 
+   from ifx_user_claim iuc, ifx_role ifxrole
+  where iuc.IFX_ROLE_ID=ifxrole.IFX_ROLE_ID 
+    and iuc.IFX_USER_ID=52192 
+    and iuc.CLAIM_ID=10111770;
+    
+    select * from ifx_user_claim iuc where iuc.ifx_user_id = 52192;
+    select * from ifx_role r where r.ifx_role_id = 3;
+ 
+ select * from ifx_user_claim;
+ 
+insert into ifx_user_claim c (c.claim_id, c.ifx_user_id, c.ifx_role_id)
+values (12268310, 52192, 3);
+	   
+
+SearchService.getClaimSummary
+  --finds Claim from claimNumber
+  if (claim && securityService.isAllowed(user, IFXConstants.TOKEN_PENDINGITEM_VIEW, claim))
+SecurityService.isAllowed
+  checkRights(getTokens(user,claim)
+  getTokens...hql to check rights
+  
+Changing to find multiple claims in SearchService.getClaimSummary
+Problem is tokens from hql aren't returning anything in dev  
+
+To create pending items for patricia.olow:
+select * from ifx_user ifx where ifx.login like '%olow%'; --contact# 19527
+select * from ref_contact rc where rc.contact# = 19527;
+select * from referral r where r.contact# = 19527; --patOlow referrals
+select * from claim# c where c.patient# in (193273, 662853, 5937407);
+select * from ins_branch b where b.branch# in (4548, 7291, 2387);
+select * from patient p where p.patient# in (193273, 662853, 5937407);
+select * from action_hist ah where ah.open_flag = 'Y';
+
+select * from ifx_user ifx where ifx.contact_number = 37838; --diane.o'mara@libertymutual.com
+select * from ref_contact rc where rc.contact# = 37838;
+select * from referral r where r.contact# = 37838; --patOlow referrals
+select * from claim# c where c.patient# in (31481, 46463, 617957);  <-----her claims here!
+select * from ins_branch b where b.branch# in (4548, 7291, 2387);
+select * from patient p where p.patient# in (193273, 662853, 5937407);
+
+select * from ifx_user_claim;
+insert into ifx_user_claim c (c.claim_id, c.ifx_user_id, c.ifx_role_id)
+values (294434, 52192, 3);
+
+select * from action_hist ah where ah.open_flag = 'Y' and ah.contact# = 37838;  --claim WC608-167201
+
+I was storing a boolean that represented doesClaimResultsExist and used that to render either data(results) or empty IFXbox for claim results.
+Better way was to have controller control everything, including rendering blank box if no store results.  Now no need for hidden fields, or javascript boolean.
+
+--------Archive location-------------
+MoveIt moves billing archive files here:
+\\Prdutil01\common\TransmissionsProdArchive\PMI\edi\data\batch_jobs\HES
+
+Cron change
+00 00 * * 1-5 wget --read-timeout=3600 http://teamdev1:4242/healthesystems-webapp/servlet/BatchJobServlet?BILLINGFEEDPROCESSORSERVICE=run&company=LIBERTY
+produces...
+QueryString:BILLINGFEEDPROCESSORSERVICE=run
+Parameters:null
+
+http://teamdev1:4242/healthesystems-webapp/servlet/BatchJobServlet?BILLINGFEEDPROCESSORSERVICE&LIBERTY
+
+QueryString:BILLINGFEEDPROCESSORSERVICE
+Parameters:null
+
+Solution - wrap job in single quotes, so bash doesn't interpret & as run-in-background
+00 00 * * 1-5 wget --read-timeout=3600 'http://hesqa:8080/healthesystems-webapp/servlet/BatchJobServlet?BILLINGFEEDPROCESSORSERVICE=run&company=LIBERTY'
+
+-----------------IFX remember claimSummaries in session (DevId 7685)----------------
+search.gsp
+	templates/claimSummaryContainer
+		templates/claimSummaryList
+			each claimSummaries /template/claimSummaryTemplate
+			
+	searchResults.gsp renders /templates/claimSummaryList
+	
+application.js - handleFormSubmission rerenders searchResults.gsp from #updateId.html(data)
+called from claimSearch.gsp onSuccess of form submit
+	
+-----------------release-----------------	
+March 25 release date
+Dev 3/10 testing begins
+thru beta 3/21
+
+4766 OE - Adnan - sysdate instead of timestamp    teamdev1 pointed to Branch
+5140 PC - Brenda - screens for provider license number    teamdev1 pointed to Branch
+4861 /8418 OPAC/Pacific - Adnan     teamdev1 pointed to Branch_4861
+9092 (5 mg file size on attachments) - Dan still coding
+8315 - Pacific/OPAC - Usha 
+
+Pacific_4861_8418 - Mar 25 branch
+
+-------------when does productCatalogCmpyXref prodreviewdate get set?-----------------
+
+3/12 8:45 user claims to have changed product description, but no productReviewDate.
+
+ProductRecordHandler setProductReviewDate(now) twice
+ReviewRecordHandler setProductReviewDate(now) 
+
+UI must call @WebMethod updateProduct in ProductRecordWebService with a userId and productRecord
+UI::
+ProductRecordDomainController
+	updateWithUser
+		def product = createRecordDomain(params)
+		updateProduct
+	updateProduct
+		manageProductCatalogService.update(userId, product) <-- with new product??
+		
+ManageProductCatalogService
+	update
+		calls proxy.updateProduct(userId, productRecord)
+		
+ProductCatalogServices::
+PRoductRecordWebService 
+ProductRecordHandler updateCompanyXrefProperties - if !unchanged xref.setProductReviewDate(now)
+	unchanged means.... !RecordResult.UNCHANGED.equals(recordResult.getStatus())
+	
+	
+Debugging...........	
+boolean productChanges = (!RecordResult.UNCHANGED.equals(recordResult.getStatus()) && recordResult.getStatus() != null);
+recordResult.status = null
+recordResult.status = Updated
+	
+--------Bob asking where diagnosis info on Claim Detail in IFX comes from------------
+factoryService.createClaimDetail
+
+Arquillian embeds glassfish instance into Integration tests
+
+-----------IFX search pagination for DevId 7685-----------------
+<a href="/ifx-web/search/search?_advancedSearch_claim=&amp;searchContent_claim=smith&amp;page=2&amp;endDate=&amp;beginDate=" 
+onclick="jQuery.ajax({type:'POST',data:{'_advancedSearch_claim': '','searchContent_claim': 'smith','page': '2','endDate': '','beginDate': '','action': 'search','controller': 'search'}, url:'/ifx-web/search/search',success:function(data,textStatus){jQuery('#pending-items-screen').html(data);scrollToTop();},error:function(XMLHttpRequest,textStatus,errorThrown){}});return false;" controller="search" action="search" class=""> 2 </a>
+
+<a href="/ifx-web/search/reRenderSavedSearchResultsClaim?page=2" 
+onclick="jQuery.ajax({type:'POST',data:{'action': 'reRenderSavedSearchResultsClaim','controller': 'search','page': '2'}, url:'/ifx-web/search/reRenderSavedSearchResultsClaim',success:function(data,textStatus){jQuery('#pending-items-screen').html(data);scrollToTop();},error:function(XMLHttpRequest,textStatus,errorThrown){}});return false;" controller="search" action="reRenderSavedSearchResultsClaim" class=""> 2 </a>
+
+        var stored = "";
+        $.ajax('${createLink(controller: 'search', action: 'areClaimResultsStored')}',{
+            dataType: 'text',
+            success: function (data) {
+                console.log(data);
+            }
+        });
+		
+    def areClaimResultsStored() {
+        def returnValue = session.searchParamsClaim ? true : false
+        render(contentType: 'text/json', returnValue as JSON)
+    }
+	
+---------------Order Entry---------------
+KG Modifier
+if UMWA AND PC.hcode in Cba_hcpcs_code table AND OrderEntry.patient.zip in Cba_zipcode table
+	then createLineItemModifierXrefforKGModifier
+	
+orderLineItem.orderEntry.orderType.isUMWA
+
+---------Convert to purchase broken because of DE, IL reprice states (DevId 4861)-----------
+ConvertToPurchaseForm
+	initializeData - bind txtPurchasePrice to parent.partnerPriceEach or purchaseProductPrice.catalogPrice
+	calculatePrice - round differently when subtracting appliedPrice from purchasePrice
+	calculateCost - same as above
+ReferralEditAuthoziationForm
+	bindComponents - new binding for providerZip, partnerFeePrice, partnerPriceEach
+				   - new auth start date, auth end date, service date
+				   - if SOJ = DE or IL
+						partnerPriceEach to txtCatalogPrice
+					 else
+					    hcpcCatalogPrice to txtCatalogPrice
+						
+Pricing call with SOJ Delaware or Illinois only returns CATalog price. No FEE/UCR
+Change convert to purchase
+Grabs rental parent, convert calls Pricing.
+How is FEE/UCR price used currently in convert-to-purchase, for non-DE/IL states? It's not.
+
+Error occurs in ReferralDetailConvertAction.  It calls PricingWebService and gets number format exception
+ConvertToPurchaseForm line 191,162
+
+ReferralDetailConvertAction
+	newDetail.setPartnerpriceeach(null);
+	new ConvertToPurchaseForm
+ConvertToPurchaseForm
+	initializeData, calls getProductPrice
+	isFormValid
+		processes txtPrice
+		
+Pricing call example:	
+http://teamdev1:6080/Pricing/calculatePrice/calculatePrice.xml?providerName=INVACARE%20SUPPLY%20GROUP&providerLocationId=3103&productCodeTextField=0222400000007265&zipcode=30012&stateCode=GA&claimTypeId=7&date_value=04/20/2011&quantity=1&retrievalMethod=ProductCode&customerId=543&customerName=LIBERTY+MUTUAL+INS
+
+select * from product_Catalog pc where pc.product_code = '0204600000075860';
+select * from product_Catalog pc where pc.product_catalog_id = '66120';
+select * from product_catalog_pricing pr where pr.product_catalog_id = '66120';
+
+Convertible parents:
+select rf.claim_id from pmi.Hes_Pmi_Referral rf, pmi.hes_pmi_referral_detail rd, pmi.product_catalog p
+where rf.hes_pmi_referral_id = rd.hes_pmi_referral_id
+and rd.productid_nonppi = p.product_code
+and rd.pmi_status = 'Authorized'
+and p.purchase_product_id is not null
+--and rd.reprice_state in ('DE', 'IL')
+order by rf.partner_referral_id desc;
+
+WC868-A83096  Converted!!
+product code: 0204600000075860  purchase product code:66120, which has price 2744
+Price returned:   catalog price: null
+                  price: 2744
+				  cost: 1935.5
+
+Other places that use getHcpcUcrPrice:
+ReferralDetailPricingUtil setPricingDetails *
+PmiReferralServiceBean updatePartnerPricingFields
+PricingServiceBean roundMonetaryFields
+
+ConvertToPurchaseForm
+	initializeData
+			System.out.println("catalog price is:" + String.valueOf(purchaseProductPrice.getCatalogPrice()));
+			System.out.println("txt purchase price is:" + txtPurchaseProductPrice.getText());
+			txtPurchaseProductPrice.setText(String.valueOf(purchaseProductPrice.getPrice()));
+
+
+--------------IFX search issues----------------
+use diane.o'mara@libertymutual.com  Password.1234
+
+X - 90 day end date should be from start date
+x - Clear button now beside Search.  Corrected, but now mobile buttons very close.
+X - Validate PI tab, must have >3 char before Search enabled unless Advanced is checked
+X - Leave blank to show all --> "90 days from start date"
+X - Pending Item screen, dualListBox selectAllAdj now to submit selected adjusters only. Tested LM-205, Amanda Thomas, Dawn Fox
+x	No clear button on mobile.  Amie says ok that no date range for mobile claim search
+x	Search content textarea resized to larger box size to stay consistent.
+x	Only open pending items pertains only to pending item search screen.  Claim search ignores pending items.
+
+
+WC823-342254 appears in Pending Items, should not if no pending items
+
+-------------Exception in wizard------------------
+ReferralDetailAuthorizationWizardPage  940
+	getProductPrice    no productPrice.getCatalogPrice
+	
+above called from ReferralDetailAuthorizationWizard  line 639
+
+Should we be concerned with other places that perform productPrice.getCatalogPrice() ?
+PricingServiceBean
+	roundMonetaryFields  line 221
+	setPriceComponents   line 511
+ReferralDetailAuthorizationWizardPage	
+	getProductPrice		line 940 - fixed.  This now calls getPrice()
+
+Mollie used claim VE2786, and create child to get that error
+
+--------Mollie claims some products not showing UCR price in dev (non-DE/IL)--------------
+	http://teamdev1:6080/Pricing/calculatePrice/calculatePrice.xml?claimTypeId=7&serviceId=1&productCodeTextField=0219300000007361&providerName=EMPI+INC&providerLocationId=14686&zipcode=30301&stateCode=GA&date
+_value=04/16/2014&quantity=1&customerName=LIBERTY+MUTUAL+INS&customerId=543&retrievalMethod=ProductCode
+	
+ReferralDetailPricingUtil
+	detail.setPartnerucrprice(pricing.getHcpcUcrPrice());
+	
+ReferralEditAuthorizationForm
+	bind(referralDetailDataModel, "partnerucrprice", txtUcrPrice)
+	
+	
+----ticket for PMSI user for IFX_ADMIN access-------------
+select * from auth_group;
+select * from pmi_user;
+select * from auth_user_xref;  --seq is seq_auth_user_xref
+
+
+Illustrative guide to Git
+http://nathanj.github.com/gitguide/tour.html
+
+Grails docs - web layer
+http://grails.org/doc/latest/guide/theWebLayer.html#formtokens
+
+-------------Restat Minute file -> PMSI-----------------
+Hibernate HQL  (createQuery)
+http://docs.jboss.org/hibernate/core/3.6/reference/en-US/html/objectstate.html#objectstate-querying
+
+Minute file contains patientId, which is really memberId
+We should be able to take memberId and get Patient.  This will be done in findPatient after searching ssn,personCode, then just ssn.
+First fill does have ssn...but we're skipping that.
+No SSN in the minute file.
+
+Application_Resource
+	SEQ_APPLICATION_RESOURCE
+	resourceName maxSize: 100
+Application_Resource_Entry
+	SEQ_APPLICATION_RES_ENTRY
+	key maxSize: 100
+	value maxSize: 4000
+	
+Example:
+Document
+DocumentDAO
+HibernateDocumentDAO
+HibernateDocumentDAOSystemTest
+DocumentService
+DocumentServiceBean
+usage : EJBDocumentServiceAdapter
+	   private DocumentService documentService;
+	   document = getDocumentService().findDocumentByID(documentID);  -can be done in pacific server. Don't need adapter since not in pac client
+I created:
+	Application
+	ApplicationResource
+	ApplicationResEntry
+	ApplicationResourceDAO
+	ApplicationResEntryDAO
+	HibernateApplicationResEntryDAOSystemTest
+	ApplicationResource.hbm.xml
+	
+	<mapping resource="com/pmi/pacific/common/domain/ApplicationResEntry.hbm.xml"/>
+	
+RejectFileProcessor
+	runInternal - starting point. 
+		init();
+		readFiles();
+		processSoftRejects();  which calls service.processRestatMinuteFile(rmf);
+	
+	
+	init - get vendors doing business with us from AppResource.  Set file filter for each.
+
+	processFile - processes each file one at a time.  (Called by AbstractFileProcessor.readFiles)
+	              calls service.processRestatMinuteFileData(rmfData);
+			Add - read header of file to get vendor, then ApplicationResource lookup
+
+AbstractFileProcessor.readFile iterates over fileFilter, calling processFile on each
+			
+RejectService - interface
+RejectServiceBean - gets rejectServiceDelegate bean
+					starts Hibernate session, session.beginTransaction
+					calls delegate.processRestatMinuteFile
+RejectServiceDelegate
+	processRestatMinuteFileData
+		calls delegate.processRestatMinuteFileData(in);
+		
+pacific  install.properties contains mail.group.rejectnotification=EDISupport@progressive-medical.com
+
+DEV DCR:
+select * from pmi.application a where a.app_name = 'MINUTE_FILE';
+select * from application_resource ar where ar.app_id = 1572478;
+select * from application_res_entry are where are.app_resource_id = 2443;
+select * from application_res_entry are where are.app_resource_id = 2444;
+
+Schedules created in RejectServiceDelegate, createSchedule
+
+How to determine receiving files has stopped:::
+Email says You're receiving this because we haven't gotten a file from <vendor> in <freq_stg_table> mins.
+Selects max RestatMinuteFile record for that vendor.  If rmf.runDate - systime > freq_Stg_table mins (20 mins), email.
+
+ant -projecthelp
+ant run-system-tests
+
+OBSOLETE - deploy Pacific changes to testapp01 so Satya can call it from PerlDev scripts.
+Use jbossdev instead of testapp01
+
+Pacific scheduler jboss
+http://jbossdev.pmi.corp:8080/pacific-scheduler/admin
+
+Pacific scheduler testapp01
+http://testapp01.pmi.corp:8080/pacific-scheduler/admin
+localhost:8080/pacific-scheduler/admin
+
+Pacific scheduler to bypass credentials
+http://jbossdev.pmi.corp:8080/pacific-scheduler/admin?p=RejectFileProcessor&run=true&perl=true
+
+jboss server
+
+Files on testapp01 need dropped in /usr/local/jboss/tmp/reject
+Files on jbossdev need dropped in /home/share/tpb/staging/MINUTEFILES
+
+log:  /opt/jboss/server/default/log
+
+To stop jboss, login as user: jboss pw:jboss01
+/usr/local/jboss/bin/   start and stop scripts
+
+StringBuffer description = new StringBuffer();
+		description.append(PMISchedule.VERIFY_DOCTOR);
+		description.append(drugName);
+		
+		params.put(Schedule.DESCRIPTION, description);
+		List<Schedule> schedules = pmiDAO.findByNamedQuery(Schedule.)
+
+RejectFileFixedLength.properties - layout of reject files		
+		
+Hard coded Restat!!!
+
+PBMData hard coded Restat Id.  RejectServiceDelegate.findPatient
+
+Delegate isFirstFill  remove if for restat
+
+RejectServiceDelegate
+we already get Patient by rmf.getPatientId.
+
+if non-IFXScheduleDesc
+	createSchedule
+		finds patient using rmf.getPatientId (let's call it ssn)
+		which is lookup of MEMBER_ID_XREF where pbmMemberId=(ssn)
+		Once that is found, take the xref PMI-member-id and lookup Patient, using ssn and person code. possibly getting >1 patient. Return oldest one.
+		If not found looking for ssn and person code, lookup just using ssn.
+		
+Prod reject files here:
+pmiedi01 - /home/share/PBM/tpb/reject/archive
+
+Pacific server - if new domain class, add to hibernate.cfg.xml found in /pacific-server/pacific/installation/server/conf which is not Eclipse accessible.
+
+still getting error in RejectFileProcessor, rmfData.setVendor(this.vendor.getName()); doesn't seem to set.  No vendor in Restat_minute_data table
+Now using setter method for vendor, since vendor is private
+then for actual data to be written, getFillDate can't be > 180 days
+
+Jboss enable debugging: (add this -X option)
+JAVA_OPTS="$JAVA_OPTS -Dprogram.name=$PROGNAME -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=n"
+
+Cross-site scripting remediation
+http://www.acunetix.com/blog/web-security-zone/articles/preventing-xss-attacks/
+https://code.google.com/p/xssprotect/   - use this jar to filter out <SCRIPT> and others
+
+7-zip password for GTSI file:  PmIsr!4102
+
+http://teamdev2:8880/ifx/dashboard/index
+IFXtablig, sortButton can't reflect rfParams.
+
+------------Pricing not hitting price source for Accident Fund------------
+select * from product_catalog pc where pc.product_code = '0402200000034495';
+select * from price_source; --47 is LAM
+select * from price_load pl where pl.price_load_id = 47;
+select * from price_source_amount psa where psa.price_load_id = 47;
+
+Why is it hitting standard default markup instead of hitting Price Source
+What is select * from price_plan_group ppg where ppg.price_plan_group_id = 1544; --Contract - Accident fund holdings inc
+
+Turns out if there is state specific plans, it skips looking for national (null) plans.  Michelle should it should do both.
+
+----second Pricing issue 2013 vs 2014 diff st reimb rule-------------
+
+PricePlanGroup, calculateUsingAPlan
+
+2014:
+priceComponents:  pricePlanName  Standard cost plus range  
+                                 Ingenix 85th 38 
+								 SFS Workers Comp 
+								 PMI UCR-DME UCR 38 
+Minimum price Map, pricePlanName  Standard cost plus range
+isLesserOfGroup && awpSourceIsNotTheLowestPrice ---true
+minimumPriceMap.retailPrice = retailPrice
+
+sourceType 13 Medispan
+
+2013:
+Source Type 6 - UCR
+calculator: UCRplanpricecalculator
+Soucetype: 1 Ingenix
+
+Why not stateReimbursement percent billed?  calculation not found for GProductCategory=4, which is DME
+
+------------PBM to Vendor to NABP relationship---------
+
+PBM   Restat(1)
+			has many   Vendors  1 
+						        10793
+
+	  PMSI(3)
+			has many   Vendors  20 
+			                    30 
+								
+					            each Vendor can have multiple NABP(TPID)  8, 9, 10 
+They want PMSI to have the same NABP numbers as restat.  
+We need to use Rule 'REJECT_PROCESS_VENDOR' to associate TPIDs with Vendor numbers.  Currently passes in TPID...add vendor name from file to this rule.
+
+----------8215 Substitution & Formulary UI managing---------------------
+dbmaintain changes:
+alter table pmi.hes_catalog_product
+add TERM_DATE DATE;
+
+alter table pmi.product_catalog_company_xref
+add SUBST_REVIEW_DATE DATE;
+
+alter table pmi.product_catalog_substitution
+add TERM_DATE DATE;
+
+Usages of ProductCatalogSubstitution status:
+	common-persistence-pmi ProductCatalogSubstitution
+	healthesystems-product-catalog
+		SubstitutionRecordHandler
+		ProductServiceBean
+		ProductService
+		
+TO DO!!  common-persistence-pmi changes to OPAC_HES_8215
+	I didn't want to start these until 4861 is complete, to not context switch.
+	
+ProductCatalogFormulary
+	PK is prodCatId + effective_date
+
+	Good example of formulary dup that needs cleaned up.
+	select * from PMI.product_catalog_formulary pcf where pcf.product_catalog_id = 32327;
+
+
+Remit file application_config.  'FILE_FOLDER' and 'FILE_REGEX'
+select * from application_config ac where ac.name = 'FILE_REGEX';
+select * from application_config ac where ac.app_config_id = 63;
+select * from application_config_detail acd where acd.app_config_id = 63;
+
+-------------Product Catalog changes for formulary----------------
+Form and subst checkboxes apply to ALL companies, not just ones in the dual list box
+Send to HES can even be unchecked, and we still need form/subst info
+Checking box, adds formulary record with eff date of sysdate
+Unchecking box, terminates it
+
+substitutionInfo = ProductCatalogFormulary.findAll(productRecordDomainInstance.id)
+
+
+AncillaryCommon
+	ProductRecordDomainController
+		create & edit
+Note	Still need to change common-persistence Entities for the dbmaintain changes.
+
+No need for product_Catalog_formulary to have ins_company_num.  Formulary will exists for ALL companies that offer product.
+
+ProductRecordDomainController
+	common.gsp renders customerList 
+	
+new parms:
+substCheckbox
+substProduct
+formulary
+
+
+Config.groovy - runtime environment params
+	like -  productCatalog.createOrUpdate.service.url = "http://localhost:9090/healthesystems-product-catalog-web/ProductRecordWebService?wsdl"
+access like this:
+    def getServiceUrl() {
+        ConfigurationHolder.config.productCatalog.createOrUpdate.service.url
+    }
+	
+Test:
+select * from product_catalog pc where pc.product_catalog_id = 35928; -subst
+select * from product_Catalog pc where pc.product_catalog_id = 23480;  --regular
+select * from product_Catalog pc where pc.product_catalog_id = 8685; --form
+	
+------------syadmin create dir structure for Reject minute process in beta-----------
+pacific-config.properties
+	folder.reject.receive=c:/development/reject
+
+Need:
+archive
+reports
+errors
+
+
+------------------Hibernate Entity-----------------------
+@Entity
+@Table(name = "PROCEDURE_CODE_MODIFIER")
+@SequenceGenerator(name="SEQUENCE", sequenceName="SEQ_PROCEDURE_CODE_MODIFIER", allocationSize=1)
+@NamedQueries({
+	@NamedQuery(name = "ProcedureCodeModifier.findByModifier", query = "SELECT p FROM ProcedureCodeModifier p WHERE p.modifier = :modifier")
+})
+public class ProcedureCodeModifier implements java.io.Serializable {
+
+	// constants for named queries
+	public static final String FIND_BY_MODIFIER = "ProcedureCodeModifier.findByModifier";
+	
+	// constants for named query parameters
+	public static final String MODIFIER = "modifier";
+
+    // Fields
+    private Long procedureCodeModifierId;
+    private String modifier;
+    private String description;
+    private String state;
+    private Long companyNumber;
+    private String status;
+
+------------Grails plugin or compiled plugin--------------
+//grails.plugin.location.'common-domain'= System.getenv("COMMON_DOMAIN_PATH") ?: "../common-domain"
+OR 
+    plugins {
+		compile ":common-domain:1.3.3"
+		
+		
+---------Clean up these 2 products where >2 active, effective rows----------
+SELECT f.* FROM pmi.product_catalog_formulary f  where f.product_catalog_id in (1830, 19095);
+
+If upgrading Cygwin...
+http://grails.1312388.n4.nabble.com/Grails-bug-with-cygwin-terminal-td4639236.html
+
+NEVER check in WSDL or XSD.  Jenkins sees it and won't regenerate new one. Just check in PortType and BindingStub.
+
+-------Connect to remote desktop---------
+mstsc /span 

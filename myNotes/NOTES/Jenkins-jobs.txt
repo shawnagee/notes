@@ -1,0 +1,91 @@
+Jenkins jobs
+
+
+
+CI1, job to run tests
+
+check Discard old Builds
+Days to keep builds 30
+Max# builds 50
+
+Source code management
+Subversion, Respository URL -> point to trunk or branch
+Checkout strategy 'Use svn update as much as possible'
+Build Triggers
+check Build after other projects are built, Project Name AncillaryCommon
+Poll SCM, Schedule */3 * * * *
+
+Build
+Build with Grails
+Grails installation 1.3.5 
+NonInteractive checked
+Targets  clean "test-app -unit -integration -coverage -xml" 
+server port 9090
+Properties  grails.env=teamci1
+
+Build with Grails 
+NonInteractive checked
+Target gmetrics
+
+Post build actions 
+Files to scan  **/*.groovy
+Tasks tags High priority-FIXME, Normal priority-TODO, Low priority-ONHOLD 
+Publish Junit test results report
+Test report XMLs  pricing/target/test-reports/*.xml 
+Publish Cobertura coverage report
+cobertura xml report pattern  **/target/test-reports/cobertura/coverage.xml
+consider only stable builds checked 
+source encoding  ASCII 
+
+Post build task
+Log text 'Tests Passed'
+Script    cd pricing 
+          grails war target/Pricing-1.0-SNAPSHOT.war
+Script    cd pricing 
+		  sh deploy-snapshot.bat
+Script 	  cd pricing-8109
+          sh deploy-revision.bat 
+		  
+		  
+IFX job to run tests on CI1
+
+similar to above except:
+Post build task 
+	cd ifx-web
+    svn info | grep Revision > revision.txt
+    mvn deploy:deploy-file -Durl=http://jbuild01:8080/nexus/content/repositories/snapshots -DrepositoryId=snapshots -DuniqueVersion=false
+	-Dfile=revision.txt -DgroupId=com.pmi.ifx9.revision -DartifactId=ifx-web -Dversion=1.0-SNAPSHOT -Dpackaging=txt
+
+	
+Teamdev1 build of IFX 
+
+Discard old builds 
+This build is parameterized checked 
+String Parameter
+	Name revision 
+
+Source code mgmt
+SVN modules 
+	Repository URL -> point to branch
+Build
+Build with Grails
+	Grails installation  Grails-2.0.4
+	Targets  clean packaage-plugin
+	Project base dir  ../ifx-data-access 
+Build with Grails 
+    Grails installation  Grails-2.0.4
+	Targets  clean packaage-plugin
+	Project base dir  ../ifx-services 
+Build with Grails 
+    Grails installation  Grails-2.0.4
+	Targets  war 
+
+Execute shell
+Command:
+BUILD_ID=dontKillMe
+undeploy_gf_ifx9.sh ifx
+stop_gf_ifx9.sh
+start_gf_ifx9.sh
+deploy_gf_ifx9.sh ifx-web/target/ifx.war
+
+	
